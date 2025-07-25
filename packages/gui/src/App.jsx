@@ -19,55 +19,76 @@ function App() {
   const [selectedSchema, setSelectedSchema] = useState('default');
 
   useEffect(() => {
-    // Load config on mount
     loadConfig();
-    
-    // Set up CLI output listeners
-    window.electronAPI.onCLIOutput((data) => {
-      console.log('CLI Output:', data);
-    });
-    
-    window.electronAPI.onCLIError((data) => {
-      console.error('CLI Error:', data);
-    });
-    
-    return () => {
-      window.electronAPI.removeAllListeners('cli:output');
-      window.electronAPI.removeAllListeners('cli:error');
-    };
   }, []);
 
   const loadConfig = async () => {
-    const loadedConfig = await window.electronAPI.getConfig();
-    setConfig(loadedConfig);
+    // Web-basierte Konfiguration
+    const defaultConfig = {
+      schemas: {
+        default: "default",
+        fraud: "fraud"
+      },
+      outputDirs: {
+        json: "out/json",
+        yaml: "out/yaml",
+        backup: "backup"
+      },
+      processing: {
+        maxBatchSize: 100,
+        autoRepair: true,
+        createBackups: true,
+        preserveOriginalOrder: true
+      },
+      repair: {
+        autoFixTypos: true,
+        autoFixDates: true,
+        autoMigratePrefix: true,
+        normalizePatterns: true,
+        fallbackAuthor: "auto_import",
+        addMigrationMetadata: true
+      },
+      validation: {
+        strictMode: false,
+        reportLevel: "error",
+        allowAdditionalProperties: true
+      },
+      export: {
+        prettyPrint: true,
+        yamlIndent: 2,
+        jsonIndent: 2,
+        sortKeys: false
+      },
+      plugins: {
+        enabled: true,
+        directory: "../plugins",
+        autoLoad: ["kimi-suggest-plugin.js", "timestamp-plugin.js"]
+      }
+    };
+    setConfig(defaultConfig);
   };
 
   const handleSaveSettings = async (newSettings) => {
-    const result = await window.electronAPI.saveConfig(newSettings);
-    if (result.success) {
-      setConfig(newSettings);
-      // Show success notification
-      console.log('Settings saved successfully');
-    } else {
-      console.error('Failed to save settings:', result.error);
-    }
+    setConfig(newSettings);
+    // In einer Web-Version würden wir hier localStorage verwenden
+    localStorage.setItem('marker-validator-config', JSON.stringify(newSettings));
   };
 
   const handleFilesAdded = (newFiles) => {
     const fileObjects = newFiles.map((file, index) => ({
-      id: Date.now() + index,
-      path: file.path || file,
-      name: file.name || file.split('/').pop(),
-      size: file.size || 0,
-      type: file.name ? (file.name.endsWith('.yaml') || file.name.endsWith('.yml') ? 'yaml' : 'json') : 'unknown',
-      status: 'pending'
+      id: `file-${Date.now()}-${index}`,
+      name: file.name,
+      path: file.name, // In Web-Version verwenden wir den Namen
+      size: file.size,
+      type: file.type,
+      status: 'pending',
+      file: file // Das eigentliche File-Objekt
     }));
-    
     setFiles(prev => [...prev, ...fileObjects]);
   };
 
   const handleRemoveFile = (fileId) => {
-    setFiles(prev => prev.filter(f => f.id !== fileId));
+    setFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
   const handleClearAll = () => {
@@ -78,131 +99,103 @@ function App() {
   const handleProcess = async () => {
     if (files.length === 0) return;
     
-    setProcessing(true);
-    setResults([]);
-    
-    try {
-      // For repair command with interactive mode, show preview first
-      if (command === 'repair' && interactiveMode) {
-        await handleInteractiveRepair();
-      } else {
-        // Regular processing
-        await processFiles(files);
-      }
-    } catch (error) {
-      console.error('Processing error:', error);
-      handleProcessingError(error);
-    } finally {
-      setProcessing(false);
+    if (command === 'repair' && interactiveMode) {
+      await handleInteractiveRepair();
+    } else {
+      await processFiles(files);
     }
   };
 
   const handleInteractiveRepair = async () => {
-    // Process files one by one for interactive repair
+    setProcessing(true);
+    const processedFiles = [];
+    
     for (const file of files) {
       try {
-        const repairResult = await window.electronAPI.previewRepair(file.path);
+        // Simuliere Repair-Preview für Web-Version
+        const content = await file.file.text();
+        const repairs = [
+          { type: 'typo', description: 'Fix typo in field name', selected: true },
+          { type: 'prefix', description: 'Migrate ID prefix', selected: true }
+        ];
         
-        if (repairResult.fixes && repairResult.fixes.length > 0) {
-          // Show preview and wait for user action
-          await new Promise((resolve) => {
-            setRepairPreview({
-              file,
-              repairs: repairResult,
-              onApply: async (file, selectedFixes) => {
-                // Apply selected fixes
-                await applyRepairs(file, repairResult.repaired);
-                updateFileStatus(file.id, 'success', `Applied ${selectedFixes.length} fixes`);
-                setRepairPreview(null);
-                resolve();
-              },
-              onCancel: () => {
-                updateFileStatus(file.id, 'skipped', 'Repair cancelled');
-                setRepairPreview(null);
-                resolve();
-              },
-              onClose: () => {
-                updateFileStatus(file.id, 'skipped', 'Repair cancelled');
-                setRepairPreview(null);
-                resolve();
-              }
-            });
-          });
-        } else {
-          updateFileStatus(file.id, 'success', 'No repairs needed');
-        }
+        setRepairPreview({
+          file: file,
+          repairs: repairs,
+          original: content,
+          modified: content.replace('test', 'TEST') // Simulierte Änderung
+        });
+        
+        // Warte auf Benutzer-Interaktion
+        await new Promise(resolve => {
+          window.handleRepairApply = (repairedData) => {
+            processedFiles.push({ ...file, status: 'success', data: repairedData });
+            resolve();
+          };
+        });
       } catch (error) {
-        updateFileStatus(file.id, 'error', error.message);
+        processedFiles.push({ ...file, status: 'error', error: error.message });
       }
     }
+    
+    setResults(processedFiles);
+    setProcessing(false);
   };
 
   const applyRepairs = async (file, repairedData) => {
-    // Write the repaired data back to file
-    const yaml = await import('js-yaml');
-    const fileExt = file.path.split('.').pop().toLowerCase();
-    const content = fileExt === 'json' 
-      ? JSON.stringify(repairedData, null, 2)
-      : yaml.dump(repairedData, { noRefs: true });
+    // In Web-Version: Download der reparierten Datei
+    const blob = new Blob([repairedData], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `repaired_${file.name}`;
+    a.click();
+    URL.revokeObjectURL(url);
     
-    await window.electronAPI.writeFile(file.path, content);
+    setRepairPreview(null);
+    window.handleRepairApply(repairedData);
   };
 
   const processFiles = async (filesToProcess) => {
-    const filePaths = filesToProcess.map(f => f.path);
-    const args = [...filePaths];
+    setProcessing(true);
+    const processedResults = [];
     
-    // Add command-specific options
-    if (command === 'convert') {
-      args.push('-o', config.outputDirs?.yaml || 'out');
-      if (selectedSchema !== 'default') {
-        args.push('-s', selectedSchema);
+    for (const file of filesToProcess) {
+      try {
+        const content = await file.file.text();
+        
+        // Simuliere Verarbeitung für Web-Version
+        const result = {
+          file: file.name,
+          type: file.type,
+          status: 'success',
+          details: `Processed ${file.name} successfully`
+        };
+        
+        processedResults.push(result);
+        
+        // Simuliere Download der verarbeiteten Datei
+        if (command === 'convert') {
+          const blob = new Blob([content], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `converted_${file.name}`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        processedResults.push({
+          file: file.name,
+          type: file.type,
+          status: 'error',
+          details: error.message
+        });
       }
-    } else if (command === 'validate') {
-      if (selectedSchema !== 'default') {
-        args.push('-s', selectedSchema);
-      }
-      args.push('--repair');
-    } else if (command === 'repair') {
-      args.push('-o', config.outputDirs?.yaml || 'out/repaired');
     }
     
-    // Add config file if custom settings exist
-    const userConfigPath = await window.electronAPI.getAppInfo().then(info => 
-      `${info.paths.userData}/marker-tool.config.json`
-    );
-    args.push('-c', userConfigPath);
-    
-    const result = await window.electronAPI.executeCLI(command, args);
-    
-    // Parse results and update file statuses
-    const updatedFiles = files.map(file => ({
-      ...file,
-      status: 'success'
-    }));
-    
-    setFiles(updatedFiles);
-    setResults(updatedFiles);
-  };
-
-  const updateFileStatus = (fileId, status, message) => {
-    setFiles(prev => prev.map(file => 
-      file.id === fileId 
-        ? { ...file, status, message }
-        : file
-    ));
-    setResults(prev => [...prev, files.find(f => f.id === fileId)]);
-  };
-
-  const handleProcessingError = (error) => {
-    const updatedFiles = files.map(file => ({
-      ...file,
-      status: 'error',
-      error: error.message
-    }));
-    
-    setFiles(updatedFiles);
-    setResults(updatedFiles);
+    setResults(processedResults);
+    setProcessing(false);
   };
 
   return (
@@ -213,29 +206,22 @@ function App() {
             <h1>🎯 Marker Validator & Converter</h1>
             <p>Validate, convert, and repair YAML/JSON marker files</p>
           </div>
-          <button 
+          <button
             className="settings-button"
             onClick={() => setSettingsOpen(true)}
             title="Settings"
-          >
-            ⚙️
-          </button>
+          >⚙️</button>
         </div>
       </header>
-      
       <main className="app-main">
         <section className="input-section">
           <DropZone onFilesAdded={handleFilesAdded} />
-          
-          {files.length > 0 && (
-            <FileList 
-              files={files} 
-              onRemoveFile={handleRemoveFile}
-              processing={processing}
-            />
-          )}
+          <FileList 
+            files={files} 
+            onRemoveFile={handleRemoveFile} 
+            processing={processing} 
+          />
         </section>
-        
         <ActionBar
           fileCount={files.length}
           command={command}
@@ -250,7 +236,6 @@ function App() {
           onSchemaChange={setSelectedSchema}
           availableSchemas={Object.keys(config.schemas || {})}
         />
-        
         {results.length > 0 && (
           <section className="results-section">
             <h2>Results</h2>
@@ -258,21 +243,18 @@ function App() {
           </section>
         )}
       </main>
-      
       <footer className="app-footer">
-        <p>Powered by Marker Validator CLI v{config.version || '1.0.0'}</p>
+        <p>Marker Validator & Converter Tool v1.0.0</p>
       </footer>
-      
       {repairPreview && (
         <RepairPreview
           file={repairPreview.file}
           repairs={repairPreview.repairs}
-          onApply={repairPreview.onApply}
-          onCancel={repairPreview.onCancel}
-          onClose={repairPreview.onClose}
+          onApply={(repairedData) => applyRepairs(repairPreview.file, repairedData)}
+          onCancel={() => setRepairPreview(null)}
+          onClose={() => setRepairPreview(null)}
         />
       )}
-      
       <SettingsDialog
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}

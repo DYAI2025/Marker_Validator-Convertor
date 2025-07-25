@@ -8,10 +8,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Change to the GUI directory
 cd "$DIR/packages/gui"
 
-echo "🎯 Marker Validator GUI"
-echo "======================"
+echo "🎯 Marker Validator GUI (Web Version)"
+echo "====================================="
 echo ""
-echo "Starting the GUI application..."
+echo "Starting the web application..."
 echo ""
 
 # Check if dependencies are installed
@@ -23,5 +23,8 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Start the GUI
-echo "🚀 Launching GUI..."
+echo "🚀 Launching web application..."
+echo "The application will open in your default browser."
+echo "If it doesn't open automatically, go to: http://localhost:3000"
+echo ""
 pnpm start 
