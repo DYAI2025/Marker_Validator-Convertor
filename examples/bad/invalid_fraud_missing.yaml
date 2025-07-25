@@ -1,0 +1,19 @@
+# Invalid fraud marker - missing required fraud_indicators and fraud tags
+id: S_FAKE_FRAUD
+marker: FAKE_FRAUD
+description: "Claims to be a fraud marker but lacks required fraud fields"
+level: 2
+version: "1.0.0"
+status: active
+author: "test"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags:
+  - semantic
+  - test  # Missing required fraud-related tags
+pattern: "fraud pattern"
+examples:
+  - "This should have fraud indicators"
+category: "FRAUD"
+risk_score: 2  # Too low for fraud marker (min 3)
+# Missing: fraud_indicators array 

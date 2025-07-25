@@ -1,0 +1,29 @@
+{
+  "id": "MM_STRATEGIC_MANIPULATION",
+  "marker": "STRATEGIC_MANIPULATION",
+  "description": "Meta-marker identifying systematic deployment of manipulation strategies",
+  "level": 4,
+  "version": "3.0.0",
+  "status": "active",
+  "author": "advanced.analytics",
+  "created": "2024-01-05T07:00:00Z",
+  "last_modified": "2024-01-30T18:00:00Z",
+  "tags": ["meta", "strategic", "manipulation", "high-risk"],
+  "pattern": "Systematic pattern deployment across multiple interactions",
+  "examples": [
+    "Gradual escalation of pressure tactics over multiple conversations",
+    "Strategic alternation between trust-building and exploitation phases"
+  ],
+  "category": "META_STRATEGY",
+  "risk_score": 5,
+  "meta_analysis": {
+    "temporal_pattern": "Progressive escalation",
+    "frequency_threshold": 10,
+    "context_sensitivity": "very_high"
+  },
+  "required_clusters": [
+    "C_PRESSURE_TACTICS",
+    "C_TRUST_EXPLOITATION",
+    "C_EMOTIONAL_MANIPULATION"
+  ]
+} 

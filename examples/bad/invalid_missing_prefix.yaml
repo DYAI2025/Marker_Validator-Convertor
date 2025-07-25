@@ -1,0 +1,18 @@
+# This marker is invalid because the ID doesn't have the required prefix
+id: WRONG_ID_FORMAT  # Should be A_WRONG_ID_FORMAT
+marker: WRONG_ID_FORMAT
+description: "This marker has an invalid ID format - missing required prefix"
+level: 1
+version: "1.0.0"
+status: active
+author: "test"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags:
+  - error
+  - test
+pattern: "test pattern"
+examples:
+  - "This will fail validation"
+category: "ERROR_DEMO"
+risk_score: 1 

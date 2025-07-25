@@ -1,0 +1,23 @@
+{
+  "name": "@marker-validator/monorepo",
+  "version": "1.0.0",
+  "description": "Marker Validator & Converter Tool - Validates and converts YAML/JSON markers",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel run dev",
+    "build": "pnpm run build:cli && pnpm run build:gui",
+    "build:cli": "pnpm --filter @marker-validator/cli build",
+    "build:gui": "pnpm --filter @marker-validator/gui build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,md,yaml,yml}\""
+  },
+  "keywords": ["marker", "validator", "converter", "yaml", "json"],
+  "author": "Benjamin Poersch",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "prettier": "^3.1.0"
+  }
+}

@@ -1,0 +1,13 @@
+# This marker has multiple issues that need repair
+id: WRONG_PREFIX_TEST  # Missing A_ prefix for level 1
+marker: TEST_REPAIR
+beschreibung: "Dies ist eine Beschreibung"  # German field name
+level: 1
+# Missing version, status, author
+created: "2024-01-15"  # Not ISO format
+tags: "test, repair, example"  # String instead of array
+pattern: "single pattern"  # String instead of array
+beispiele:  # German field name
+  - "Beispiel 1"
+  - "Beispiel 2"
+risk: 2  # Wrong field name 

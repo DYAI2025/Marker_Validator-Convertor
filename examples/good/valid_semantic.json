@@ -1,0 +1,28 @@
+{
+  "id": "S_MANIPULATION_INTENT",
+  "marker": "MANIPULATION_INTENT",
+  "description": "Identifies semantic patterns indicating manipulative intent in conversation",
+  "level": 2,
+  "version": "2.0.1",
+  "status": "active",
+  "author": "fraud.detection.team",
+  "created": "2024-01-10T08:00:00Z",
+  "last_modified": "2024-01-25T16:30:00Z",
+  "tags": ["manipulation", "semantic", "intent", "fraud"],
+  "pattern": [
+    "you would agree that",
+    "everyone knows that",
+    "obviously you must"
+  ],
+  "examples": [
+    "You would agree that this is the best option",
+    "Everyone knows that this is true",
+    "Obviously you must see it my way"
+  ],
+  "category": "MANIPULATION",
+  "risk_score": 4,
+  "semantic_rules": [
+    "False consensus building",
+    "Assumed agreement patterns"
+  ]
+} 

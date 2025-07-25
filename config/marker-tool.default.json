@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "schemas": {
+    "default": "../schemas/marker.schema.v2.json",
+    "fraud": "../schemas/fraud-markers.schema.json"
+  },
+  "outputDirs": {
+    "json": "out/json",
+    "yaml": "out/yaml",
+    "backup": "backup"
+  },
+  "processing": {
+    "maxBatchSize": 100,
+    "autoRepair": true,
+    "createBackups": true,
+    "preserveOriginalOrder": true
+  },
+  "repair": {
+    "autoFixTypos": true,
+    "autoFixDates": true,
+    "autoMigratePrefix": true,
+    "normalizePatterns": true,
+    "fallbackAuthor": "auto_import",
+    "addMigrationMetadata": true
+  },
+  "validation": {
+    "strictMode": false,
+    "reportLevel": "error",
+    "allowAdditionalProperties": true
+  },
+  "export": {
+    "prettyPrint": true,
+    "yamlIndent": 2,
+    "jsonIndent": 2,
+    "sortKeys": false
+  },
+  "plugins": {
+    "enabled": true,
+    "directory": "../plugins",
+    "autoLoad": ["sample-plugin.js"]
+  }
+} 

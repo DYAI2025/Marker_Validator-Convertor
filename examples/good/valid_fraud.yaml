@@ -1,0 +1,34 @@
+id: S_PHISHING_ATTEMPT
+marker: PHISHING_ATTEMPT
+description: "Detects phishing and social engineering attempts through semantic analysis"
+level: 2
+version: "2.1.0"
+status: active
+author: "fraud.prevention"
+created: "2024-01-18T12:00:00Z"
+last_modified: "2024-02-01T09:30:00Z"
+tags:
+  - fraud
+  - phishing
+  - deception
+  - risk
+  - semantic
+pattern:
+  - "verify your account"
+  - "urgent action required"
+  - "click here immediately"
+examples:
+  - "Please verify your account details by clicking this link"
+  - "Urgent action required to prevent account suspension"
+category: "FRAUD_DETECTION"
+risk_score: 5
+fraud_indicators:
+  - type: "behavioral"
+    severity: "high"
+    description: "Creates false urgency to bypass rational thinking"
+  - type: "linguistic"
+    severity: "critical"
+    description: "Uses official-sounding language to establish false authority"
+  - type: "pattern"
+    severity: "high"
+    description: "Follows known phishing templates" 

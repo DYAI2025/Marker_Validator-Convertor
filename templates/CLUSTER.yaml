@@ -1,0 +1,30 @@
+# CLUSTER Marker Template
+# Level 3 - Pattern cluster detection
+# Prefix: C_
+
+id: C_EXAMPLE_CLUSTER
+marker: EXAMPLE_CLUSTER
+description: "Template for cluster-level markers that detect combinations of patterns"
+level: 3
+version: "1.0.0"
+status: draft
+author: "template"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags:
+  - cluster
+  - combination
+  - complex
+pattern:
+  - "cluster pattern A + pattern B"
+  - "combination of multiple indicators"
+examples:
+  - "When multiple doubt markers appear together"
+  - "Combined patterns indicate manipulation"
+category: "CLUSTER"
+risk_score: 3
+cluster_components:
+  - "A_COMPONENT_1"
+  - "S_COMPONENT_2"
+  - "A_COMPONENT_3"
+trigger_threshold: 2  # Minimum components needed to trigger 

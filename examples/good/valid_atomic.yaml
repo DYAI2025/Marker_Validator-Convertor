@@ -1,0 +1,23 @@
+id: A_DOUBT_EXPRESS
+marker: DOUBT_EXPRESS
+description: "Detects explicit expressions of doubt or uncertainty in communication"
+level: 1
+version: "1.2.0"
+status: active
+author: "benjamin.poersch"
+created: "2024-01-15T10:30:00Z"
+last_modified: "2024-01-20T14:15:00Z"
+tags:
+  - doubt
+  - uncertainty
+  - atomic
+pattern:
+  - "ich bin mir nicht sicher"
+  - "das bezweifle ich"
+  - "fraglich ob"
+examples:
+  - "Ich bin mir nicht sicher, ob das stimmt"
+  - "Das bezweifle ich stark"
+  - "Es ist fraglich ob wir das schaffen"
+category: "DOUBT"
+risk_score: 2 

@@ -1,0 +1,35 @@
+{
+  "name": "@marker-validator/cli",
+  "version": "1.0.0",
+  "description": "CLI tool for validating and converting YAML/JSON markers",
+  "type": "module",
+  "bin": {
+    "marker-convert": "./bin/cli.js"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node bin/cli.js",
+    "dev": "node --watch bin/cli.js",
+    "test": "node --test",
+    "lint": "eslint src/"
+  },
+  "keywords": ["marker", "validator", "cli", "yaml", "json"],
+  "author": "Benjamin Poersch",
+  "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10",
+    "js-yaml": "^4.1.0",
+    "slugify": "^1.6.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "C_WRONG_LEVEL_PREFIX",
+  "marker": "WRONG_LEVEL_PREFIX",
+  "description": "This marker has C_ prefix but is marked as level 1 (should be level 3)",
+  "level": 1,
+  "version": "1.0.0",
+  "status": "active",
+  "author": "test",
+  "created": "2024-01-01T00:00:00Z",
+  "last_modified": "2024-01-01T00:00:00Z",
+  "tags": ["error", "mismatch"],
+  "pattern": "test",
+  "category": "ERROR",
+  "risk_score": 1
+} 

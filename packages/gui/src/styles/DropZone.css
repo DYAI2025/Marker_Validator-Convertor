@@ -1,0 +1,53 @@
+.dropzone {
+  background-color: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dropzone:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.dropzone--active {
+  border-color: var(--color-primary);
+  background-color: rgba(59, 130, 246, 0.1);
+  transform: scale(1.01);
+}
+
+.dropzone-content {
+  padding: var(--spacing-lg);
+}
+
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.dropzone-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+}
+
+.dropzone-hint {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+.dropzone-button {
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+}
+
+.dropzone-button:hover {
+  background-color: var(--color-primary-hover);
+} 

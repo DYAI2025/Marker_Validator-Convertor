@@ -1,0 +1,27 @@
+id: C_PRESSURE_TACTICS
+marker: PRESSURE_TACTICS
+description: "Cluster marker detecting combined pressure and urgency tactics"
+level: 3
+version: "1.5.0"
+status: active
+author: "security.team"
+created: "2024-01-12T09:00:00Z"
+last_modified: "2024-01-28T11:45:00Z"
+tags:
+  - cluster
+  - pressure
+  - urgency
+  - manipulation
+pattern:
+  - "time pressure + emotional appeal"
+  - "urgency + fear tactics"
+examples:
+  - "You must decide now or you'll miss this opportunity forever"
+  - "If you don't act immediately, terrible things will happen"
+category: "PRESSURE"
+risk_score: 4
+cluster_components:
+  - "A_URGENCY_WORDS"
+  - "A_FEAR_APPEAL"
+  - "S_TIME_PRESSURE"
+trigger_threshold: 2 

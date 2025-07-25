@@ -1,0 +1,32 @@
+# META Marker Template
+# Level 4 - Meta-level pattern analysis
+# Prefix: MM_
+
+id: MM_EXAMPLE_META
+marker: EXAMPLE_META
+description: "Template for meta-level markers that analyze patterns of patterns"
+level: 4
+version: "1.0.0"
+status: draft
+author: "template"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags:
+  - meta
+  - strategic
+  - high-level
+pattern:
+  - "meta-pattern across multiple conversations"
+  - "strategic pattern deployment"
+examples:
+  - "Systematic use of manipulation techniques"
+  - "Strategic deployment of influence patterns"
+category: "META"
+risk_score: 4
+meta_analysis:
+  temporal_pattern: "Patterns evolve over time"
+  frequency_threshold: 5
+  context_sensitivity: "high"
+required_clusters:
+  - "C_MANIPULATION"
+  - "C_INFLUENCE" 

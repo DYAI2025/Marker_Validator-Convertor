@@ -1,0 +1,16 @@
+# Invalid: wrong data types for various fields
+id: S_WRONG_TYPES
+marker: WRONG_TYPES
+description: "Has wrong types"  # Too short - min 10 chars
+level: "two"  # Should be integer, not string
+version: "1.0"  # Wrong pattern - should be x.y.z
+status: "pending"  # Not in enum
+author: "test"
+created: "yesterday"  # Not ISO format
+last_modified: "2024-01-01"  # Missing time component
+tags: "single-tag"  # Should be array, not string
+pattern: 123  # Should be string or array, not number
+examples:
+  - "Example 1"
+category: "TEST"
+risk_score: 10  # Out of range (max is 5) 
