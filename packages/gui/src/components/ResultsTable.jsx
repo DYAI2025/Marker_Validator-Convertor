@@ -22,22 +22,30 @@ function ResultsTable({ results }) {
       <table className="results-data">
         <thead>
           <tr>
-            <th>File</th>
+            <th>Input File</th>
             <th>Type</th>
             <th>Status</th>
+            <th>Output File</th>
             <th>Details</th>
           </tr>
         </thead>
         <tbody>
-          {results.map(result => (
-            <tr key={result.id} className={`result-row result-row--${result.status}`}>
-              <td className="result-file">{result.name}</td>
+          {results.map((result, index) => (
+            <tr key={index} className={`result-row result-row--${result.status}`}>
+              <td className="result-file">{result.file}</td>
               <td className="result-type">{result.type.toUpperCase()}</td>
               <td className="result-status">
                 {result.status === 'success' ? '✅ Success' : '❌ Error'}
               </td>
+              <td className="result-output">
+                {result.status === 'success' && result.outputFile ? (
+                  <span className="output-filename">{result.outputFile}</span>
+                ) : (
+                  <span className="no-output">-</span>
+                )}
+              </td>
               <td className="result-details">
-                {result.error || 'Processed successfully'}
+                {result.status === 'success' ? result.details : result.details}
               </td>
             </tr>
           ))}

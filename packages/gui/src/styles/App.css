@@ -1,14 +1,14 @@
 .app {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  background: var(--color-background);
 }
 
 .app-header {
-  background-color: var(--color-surface);
-  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
 }
 
@@ -19,14 +19,16 @@
 }
 
 .app-header h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: var(--spacing-xs);
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .app-header p {
+  margin: var(--spacing-xs) 0 0 0;
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .settings-button {
@@ -51,28 +53,72 @@
 
 .app-main {
   flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .input-section {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.info-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.info-box {
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  color: var(--color-primary-dark);
+}
+
+.info-box h3 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.info-box p {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.875rem;
+}
+
+.info-box ul {
+  margin: var(--spacing-sm) 0 0 var(--spacing-md);
+  padding-left: var(--spacing-md);
+}
+
+.info-box li {
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.info-box code {
+  background: var(--color-background);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
 }
 
 .results-section {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
 }
 
 .results-section h2 {
-  font-size: 1.25rem;
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--color-text);
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
 }
 
 .app-footer {
-  background-color: var(--color-surface);
-  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--color-surface);
   border-top: 1px solid var(--color-border);
+  padding: var(--spacing-lg);
   text-align: center;
   color: var(--color-text-muted);
   font-size: 0.875rem;
