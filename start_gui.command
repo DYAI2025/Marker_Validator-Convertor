@@ -22,6 +22,14 @@ if [ ! -d "node_modules" ]; then
     cd "$DIR/packages/gui"
 fi
 
+# Check if server is already running
+if curl -s http://localhost:3000 > /dev/null 2>&1; then
+    echo "✅ GUI is already running at http://localhost:3000"
+    echo "Opening in browser..."
+    open http://localhost:3000
+    exit 0
+fi
+
 # Start the GUI
 echo "🚀 Launching web application..."
 echo "The application will open in your default browser."

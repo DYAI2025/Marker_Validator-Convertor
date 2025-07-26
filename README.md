@@ -56,8 +56,23 @@ Marker_validator_convert/
 └── templates/                      # Vorlagen für alle Dateitypen
 ```
 
-## 🚀 **Erste Schritte**
+## 🚀 **One-Click-Start**
 
+### **GUI starten (Web-Anwendung)**
+```bash
+# Doppelklick auf die Datei oder im Terminal:
+./start_gui.command
+```
+Die Web-Anwendung öffnet sich automatisch in Ihrem Browser unter `http://localhost:3000`
+
+### **CLI starten (Kommandozeile)**
+```bash
+# Doppelklick auf die Datei oder im Terminal:
+./start_marker_validator.command
+```
+Dies öffnet ein Terminal-Fenster mit der CLI und zeigt die wichtigsten Befehle an.
+
+### **Manuelle Installation**
 ```bash
 # Repository klonen
 git clone https://github.com/DYAI2025/Marker_Validator-Convertor.git
