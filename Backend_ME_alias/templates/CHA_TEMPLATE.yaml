@@ -1,0 +1,14 @@
+id: CHA_TEMPLATE
+description: "Vorlage für Chunk-Analyse-Schema"
+detectors_active:
+  - DETECT_ABSAGE_REGEX
+  - DETECT_EMO_VOLATILE
+high_level_snapshot:
+  include_levels: [C_, MM_]
+  top_k: 5
+drift_axes:
+  - speaker_valence
+  - avg_token_length
+outputs:
+  show_markers: true
+  show_drift:   true

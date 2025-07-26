@@ -1,0 +1,19 @@
+# Level 1 – Atomic Marker
+id: A_EXAMPLE_ATOMIC
+marker: EXAMPLE_ATOMIC
+description: "Detects simple farewell emojis."
+level: 1
+version: "1.0.0"
+status: draft
+author: "template"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags: [atomic, pattern, basic]
+category: "ATOMIC"
+risk_score: 1
+pattern:
+  - "👋"
+  - "🫡"
+examples:
+  - "Bis später! 👋"
+  - "Melde mich morgen 🫡"

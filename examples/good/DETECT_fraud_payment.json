@@ -1,0 +1,11 @@
+{
+    "id": "DETECT_FRAUD_PAYMENT",
+    "description": "Findet typische Geldforderungen im Text.",
+    "rule": {
+      "type": "regex",
+      "pattern": "(überweise|transfer|send(e)? mir.*geld|money request)",
+      "flags": "i"
+    },
+    "fire_marker": "A_FRAUD_PAYMENT"
+  }
+  

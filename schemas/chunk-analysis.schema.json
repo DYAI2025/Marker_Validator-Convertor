@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/chunk-analysis/v1.0",
+  "title": "Chunk Analysis Schema",
+  "description": "Schema for CHA_ files",
+  "type": "object",
+  "required": ["id", "description", "detectors_active", "high_level_snapshot", "drift_axes", "outputs"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^CHA_[A-Z0-9_]+$",
+      "description": "Chunk analysis ID with required CHA_ prefix"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the chunk analysis"
+    },
+    "detectors_active": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^DETECT_[A-Z0-9_]+$"
+      },
+      "description": "List of active DETECT_ IDs"
+    },
+    "high_level_snapshot": {
+      "type": "object",
+      "properties": {
+        "include_levels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["A_", "S_", "C_", "MM_"]
+          },
+          "description": "Levels to include in snapshot"
+        },
+        "top_k": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of top results to include"
+        }
+      },
+      "required": ["include_levels", "top_k"]
+    },
+    "drift_axes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of drift axes"
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "weight_multiplier": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Weight multiplier for scoring"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "properties": {
+        "show_markers": { "type": "boolean" },
+        "show_drift": { "type": "boolean" },
+        "store_json": { "type": "boolean" }
+      },
+      "required": ["show_markers", "show_drift"]
+    }
+  },
+  "additionalProperties": true
+} 

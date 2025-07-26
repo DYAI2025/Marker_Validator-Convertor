@@ -1,0 +1,29 @@
+[
+  {
+    "id": "DETECT_ABSAGE_REGEX",
+    "description": "Höfliche Absage – Regex-Detektor",
+    "module": "regex",
+    "file_path": "detect/DETECT_ABSAGE_REGEX.json",
+    "class": null,
+    "last_updated": "2025-07-25T00:00:00Z",
+    "auto_generated": false
+  },
+  {
+    "id": "DETECT_EMO_VOLATILE",
+    "description": "Emotionale Volatilität (Std-Abweichung)",
+    "module": "stddev",
+    "file_path": "detect/DETECT_EMO_VOLATILE.json",
+    "class": null,
+    "last_updated": "2025-07-25T00:00:00Z",
+    "auto_generated": false
+  },
+  {
+    "id": "DETECT_EMO_CONTRAST_DRIFT",
+    "description": "Valence-Kontrast-Drift > 0.3",
+    "module": "trend_delta",
+    "file_path": "detect/DETECT_EMO_CONTRAST_DRIFT.json",
+    "class": null,
+    "last_updated": "2025-07-25T00:00:00Z",
+    "auto_generated": false
+  }
+]

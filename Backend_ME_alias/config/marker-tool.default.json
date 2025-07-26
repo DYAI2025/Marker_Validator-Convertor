@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "schemata": {
+    "default": "../schemata/marker.schema.v2.json",
+    "fraud":   "../schemata/fraud-markers.schema.json"
+  },
+  "outputDirs": {
+    "json":   "out/json",
+    "yaml":   "out/yaml",
+    "backup": "backup"
+  },
+  "processing":      { "maxBatchSize": 100, "autoRepair": true, "createBackups": true },
+  "repair":          { "autoMigratePrefix": true, "normalizePatterns": true },
+  "validation":      { "strictMode": false, "allowAdditionalProperties": true },
+  "export":          { "prettyPrint": true, "yamlIndent": 2, "jsonIndent": 2 },
+  "chunk_analysis":  { "schema_path": "../chunk_analysis" },
+  "plugins": {
+    "enabled":   true,
+    "directory": "../plugins",
+    "autoLoad":  ["GR_SEM_ABSAGE.js"]
+  }
+}

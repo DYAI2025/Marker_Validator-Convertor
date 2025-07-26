@@ -1,0 +1,7 @@
+{
+    "id": "SCR_NO_AGGREGATION",
+    "target_markers": ["A_FRAUD_PAYMENT"],
+    "window": { "messages": 30 }
+    // FEHLT: "aggregation"
+  }
+  

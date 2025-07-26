@@ -20,23 +20,28 @@ import {
   writeMarkerFile,
   repairMarker,
   repairBatch,
-  formatMarker
+  formatMarker,
+  validateFile,
+  validateBatch,
+  repairFile,
+  createLogger
 } from '../src/index.js';
+import { FileTypeDetector } from '../src/file-type-detector.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8'));
 
 // Configure the CLI
 program
-  .name('marker-convert')
-  .description('CLI tool for validating and converting YAML/JSON markers')
-  .version(packageJson.version)
-  .option('-c, --config <path>', 'path to config file', '../../config/marker-tool.default.json')
+  .name('marker-validator')
+  .description('Marker Validator & Converter Tool - Validates and converts YAML/JSON markers')
+  .version('1.0.0')
+  .option('-c, --config <path>', 'path to config file')
   .option('-v, --verbose', 'verbose output', false)
   .option('--no-color', 'disable colored output')
   .helpOption('-h, --help', 'display help for command');
 
-// Convert command
+// convert command (updated in Iteration 2, enhanced in Iteration 3)
 program
   .command('convert <files...>')
   .description('Convert and validate marker files')
@@ -47,314 +52,433 @@ program
   .option('--no-backup', 'disable backup creation')
   .action(async (files, options) => {
     try {
-      // Load configuration
-      const config = loadConfig(program.opts().config);
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
       
-      // Expand globs
+      // Expand glob patterns
       const expandedFiles = [];
       for (const pattern of files) {
-        const matches = await glob(pattern);
+        const matches = await glob(pattern, { absolute: true });
         expandedFiles.push(...matches);
       }
       
       if (expandedFiles.length === 0) {
-        console.error(chalk.red('❌ No files found matching the pattern(s)'));
-        process.exit(1);
+        logger.warn('No files found matching the patterns');
+        return;
       }
       
-      console.log(chalk.blue(`🔄 Processing ${expandedFiles.length} file(s)...`));
+      logger.info(`Converting ${expandedFiles.length} files...`);
       
-      // If repair is enabled, repair markers before conversion
-      let repairedMarkers = null;
-      if (options.repair && config.processing?.autoRepair !== false) {
-        console.log(chalk.blue('\n🔧 Repairing markers...'));
-        
-        const markersToRepair = [];
-        for (const file of expandedFiles) {
-          try {
-            const { data } = await readMarkerFile(file);
-            markersToRepair.push({ file, data });
-          } catch (err) {
-            console.error(chalk.red(`❌ Failed to read ${file}: ${err.message}`));
-          }
-        }
-        
-        const repairResults = await repairBatch(
-          markersToRepair.map(m => m.data),
-          { config, verbose: program.opts().verbose }
-        );
-        
-        // Map repaired markers back to files
-        repairedMarkers = new Map();
-        repairResults.results.forEach((result, index) => {
-          if (result.modified) {
-            repairedMarkers.set(markersToRepair[index].file, result.marker);
-          }
-        });
-      }
-      
-      // Prepare options
-      const convertOptions = {
-        outputDir: options.output,
-        dryRun: options.dryRun,
-        createBackup: options.backup,
-        verbose: program.opts().verbose,
+      const results = await convertBatch(expandedFiles, {
+        ...options,
         config,
-        repairedMarkers,
-        ...config.export
-      };
+        verbose: options.verbose
+      });
       
-      // Convert files
-      const { summary } = await convertBatch(expandedFiles, convertOptions);
+      // Print results
+      let successCount = 0;
+      let errorCount = 0;
       
-      // If validation is requested, validate the converted files
-      if (options.schema && !options.dryRun) {
-        console.log(chalk.blue('\n📋 Validating converted files...'));
-        
-        for (const file of expandedFiles) {
-          try {
-            const { data } = await readMarkerFile(file);
-            // Use repaired marker if available
-            const markerToValidate = repairedMarkers?.get(file) || data;
-            
-            const result = await validateMarker(markerToValidate, options.schema, {
-              config,
-              verbose: program.opts().verbose
-            });
-            
-            if (!result.valid) {
-              console.log(chalk.yellow(`\n⚠️  Validation issues in ${file}:`));
-              const errors = formatValidationErrors(result);
-              errors.forEach(err => console.log(chalk.yellow(err)));
-            }
-          } catch (err) {
-            console.error(chalk.red(`❌ Failed to validate ${file}: ${err.message}`));
-          }
+      for (const result of results) {
+        if (result.success) {
+          logger.success(`✓ ${result.input} → ${result.outputs.join(', ')}`);
+          successCount++;
+        } else {
+          logger.error(`✗ ${result.input}: ${result.error}`);
+          errorCount++;
         }
       }
       
-      if (summary.failed > 0) {
-        process.exit(1);
-      }
+      logger.info(`\nConversion complete: ${successCount} successful, ${errorCount} failed`);
       
     } catch (error) {
-      console.error(chalk.red('❌ Error:'), error.message);
-      if (program.opts().verbose) {
-        console.error(error.stack);
-      }
+      console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
     }
   });
 
-// Repair command
-program
-  .command('repair <files...>')
-  .description('Repair marker files by applying auto-fixes')
-  .option('-o, --output <dir>', 'output directory', 'out/repaired')
-  .option('--dry-run', 'show what would be fixed without doing it')
-  .option('--no-backup', 'disable backup creation')
-  .action(async (files, options) => {
-    try {
-      // Load configuration
-      const config = loadConfig(program.opts().config);
-      
-      // Expand globs
-      const expandedFiles = [];
-      for (const pattern of files) {
-        const matches = await glob(pattern);
-        expandedFiles.push(...matches);
-      }
-      
-      if (expandedFiles.length === 0) {
-        console.error(chalk.red('❌ No files found matching the pattern(s)'));
-        process.exit(1);
-      }
-      
-      console.log(chalk.blue(`🔧 Repairing ${expandedFiles.length} file(s)...`));
-      
-      let totalFixed = 0;
-      let totalUnchanged = 0;
-      
-      for (const file of expandedFiles) {
-        try {
-          const { data, filename, originalFormat } = await readMarkerFile(file);
-          
-          const result = await repairMarker(data, {
-            config,
-            verbose: program.opts().verbose
-          });
-          
-          if (result.modified) {
-            console.log(chalk.green(`✓ ${filename} - ${result.fixes.length} fixes applied`));
-            
-            if (program.opts().verbose) {
-              result.fixes.forEach(fix => {
-                console.log(chalk.gray(`  - ${fix.message}`));
-              });
-            }
-            
-            // Write repaired file if not dry-run
-            if (!options.dryRun) {
-              const outputDir = options.output;
-              await mkdirSync(outputDir, { recursive: true });
-              const outputPath = resolve(outputDir, filename);
-              
-              await writeMarkerFile(outputPath, formatMarker(result.marker, originalFormat, { config }), originalFormat);
-            }
-            
-            totalFixed++;
-          } else {
-            console.log(chalk.gray(`- ${filename} - no fixes needed`));
-            totalUnchanged++;
-          }
-          
-        } catch (error) {
-          console.error(chalk.red(`✗ ${file}: ${error.message}`));
-        }
-      }
-      
-      // Summary
-      console.log(chalk.cyan('\n📊 Repair Summary:'));
-      console.log(chalk.green(`  ✓ Fixed: ${totalFixed}`));
-      console.log(chalk.gray(`  - Unchanged: ${totalUnchanged}`));
-      
-      if (options.dryRun) {
-        console.log(chalk.yellow('\n⚠️  This was a dry run. No files were modified.'));
-      }
-      
-    } catch (error) {
-      console.error(chalk.red('❌ Error:'), error.message);
-      if (program.opts().verbose) {
-        console.error(error.stack);
-      }
-      process.exit(1);
-    }
-  });
-
-// Validate command
+// validate command (updated in Iteration 2, enhanced in Iteration 3)
 program
   .command('validate <files...>')
   .description('Validate marker files without conversion')
   .option('-s, --schema <type>', 'schema to use (default|fraud)', 'default')
   .option('--strict', 'enable strict validation mode')
   .option('--repair', 'attempt to repair before validation')
+  .option('-c, --config <path>', 'path to config file')
+  .option('-v, --verbose', 'verbose output')
   .action(async (files, options) => {
     try {
-      // Load configuration
-      const config = loadConfig(program.opts().config);
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
       
-      // Expand globs
+      // Expand glob patterns
       const expandedFiles = [];
       for (const pattern of files) {
-        const matches = await glob(pattern);
+        const matches = await glob(pattern, { absolute: true });
         expandedFiles.push(...matches);
       }
       
       if (expandedFiles.length === 0) {
-        console.error(chalk.red('❌ No files found matching the pattern(s)'));
-        process.exit(1);
+        logger.warn('No files found matching the patterns');
+        return;
       }
       
-      console.log(chalk.blue(`✓ Validating ${expandedFiles.length} file(s)...`));
+      logger.info(`Validating ${expandedFiles.length} files...`);
       
-      let totalValid = 0;
-      let totalInvalid = 0;
-      let totalRepaired = 0;
+      const results = await validateBatch(expandedFiles, {
+        ...options,
+        config,
+        verbose: options.verbose
+      });
       
-      for (const file of expandedFiles) {
-        try {
-          let { data, filename } = await readMarkerFile(file);
-          
-          // Optionally repair before validation
-          if (options.repair) {
-            const repairResult = await repairMarker(data, {
-              config,
-              verbose: false
-            });
-            
-            if (repairResult.modified) {
-              data = repairResult.marker;
-              totalRepaired++;
-              if (program.opts().verbose) {
-                console.log(chalk.yellow(`  🔧 Applied ${repairResult.fixes.length} fixes`));
-              }
-            }
+      // Print results
+      let validCount = 0;
+      let invalidCount = 0;
+      
+      for (const result of results) {
+        if (result.valid) {
+          logger.success(`✓ ${result.file} (${result.fileType})`);
+          validCount++;
+        } else {
+          logger.error(`✗ ${result.file} (${result.fileType})`);
+          if (result.errors && result.errors.length > 0) {
+            console.log(formatValidationErrors(result.errors, options));
           }
-          
-          const result = await validateMarker(data, options.schema, {
-            config,
-            strictMode: options.strict,
-            verbose: program.opts().verbose
-          });
-          
-          if (result.valid) {
-            console.log(chalk.green(`✓ ${filename}`));
-            totalValid++;
-          } else {
-            console.log(chalk.red(`✗ ${filename}`));
-            const errors = formatValidationErrors(result);
-            errors.forEach(err => console.log(chalk.red(err)));
-            totalInvalid++;
-          }
-          
-          if (result.warnings?.length > 0 && program.opts().verbose) {
-            result.warnings.forEach(warn => {
-              console.log(chalk.yellow(`  ⚠ ${warn.field}: ${warn.message}`));
-            });
-          }
-          
-        } catch (error) {
-          console.error(chalk.red(`✗ ${file}: ${error.message}`));
-          totalInvalid++;
+          invalidCount++;
+        }
+        
+        if (result.locationValid === false) {
+          logger.warn(`  Location warning: ${result.locationMessage}`);
         }
       }
       
-      // Summary
-      console.log(chalk.cyan('\n📊 Validation Summary:'));
-      console.log(chalk.green(`  ✓ Valid: ${totalValid}`));
-      console.log(chalk.red(`  ✗ Invalid: ${totalInvalid}`));
-      if (options.repair && totalRepaired > 0) {
-        console.log(chalk.yellow(`  🔧 Repaired: ${totalRepaired}`));
-      }
-      
-      if (totalInvalid > 0) {
-        process.exit(1);
-      }
+      logger.info(`\nValidation complete: ${validCount} valid, ${invalidCount} invalid`);
       
     } catch (error) {
-      console.error(chalk.red('❌ Error:'), error.message);
-      if (program.opts().verbose) {
-        console.error(error.stack);
-      }
+      console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
     }
   });
 
-// Info command
+// repair command (Added in Iteration 3, updated in Iteration 7)
+program
+  .command('repair <files...>')
+  .description('Repair marker files by applying auto-fixes')
+  .option('-o, --output <dir>', 'output directory', 'out/repaired')
+  .option('--dry-run', 'show what would be fixed without doing it')
+  .option('--no-backup', 'disable backup creation')
+  .option('-c, --config <path>', 'path to config file') // Added in Iteration 6
+  .option('-v, --verbose', 'verbose output')
+  .action(async (files, options) => {
+    try {
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
+      
+      // Expand glob patterns
+      const expandedFiles = [];
+      for (const pattern of files) {
+        const matches = await glob(pattern, { absolute: true });
+        expandedFiles.push(...matches);
+      }
+      
+      if (expandedFiles.length === 0) {
+        logger.warn('No files found matching the patterns');
+        return;
+      }
+      
+      logger.info(`Repairing ${expandedFiles.length} files...`);
+      
+      const detector = new FileTypeDetector(config);
+      let repairedCount = 0;
+      let unchangedCount = 0;
+      let errorCount = 0;
+      
+      for (const filepath of expandedFiles) {
+        try {
+          const { data, originalFormat, filename } = await readMarkerFile(filepath);
+          const fileType = detector.detectFileType(filepath);
+          
+          logger.log(`Processing ${filename} (${fileType.type})...`);
+          
+          const result = await repairFile(data, fileType.type, {
+            ...options,
+            config,
+            verbose: options.verbose
+          });
+          
+          if (result.modified) {
+            logger.success(`✓ ${filename}: ${result.fixes.length} fixes applied`);
+            if (options.verbose) {
+              result.fixes.forEach(fix => logger.log(`  - ${fix}`));
+            }
+            
+            if (!options.dryRun) {
+              const outputDir = options.output;
+              await mkdirSync(outputDir, { recursive: true });
+              const outputPath = resolve(outputDir, filename);
+              await writeMarkerFile(outputPath, formatMarker(result.marker, originalFormat, { config }), originalFormat);
+            }
+            
+            repairedCount++;
+          } else {
+            logger.info(`- ${filename}: No fixes needed`);
+            unchangedCount++;
+          }
+          
+        } catch (error) {
+          logger.error(`✗ ${filepath}: ${error.message}`);
+          errorCount++;
+        }
+      }
+      
+      logger.info(`\nRepair complete: ${repairedCount} repaired, ${unchangedCount} unchanged, ${errorCount} errors`);
+      
+    } catch (error) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// NEW: validate-all command for all file types
+program
+  .command('validate-all')
+  .description('Validate all files in the project according to their detected types')
+  .option('-c, --config <path>', 'path to config file')
+  .option('-v, --verbose', 'verbose output')
+  .option('--strict', 'enable strict validation mode')
+  .action(async (options) => {
+    try {
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
+      
+      logger.info('Scanning project for all supported file types...');
+      
+      // Find all files in project directories
+      const allFiles = [];
+      const fileTypes = config.fileTypes || {};
+      
+      for (const [type, typeConfig] of Object.entries(fileTypes)) {
+        for (const folder of typeConfig.folders || []) {
+          const patterns = typeConfig.extensions.map(ext => `${folder}/**/*${ext}`);
+          for (const pattern of patterns) {
+            const matches = await glob(pattern, { absolute: true });
+            allFiles.push(...matches);
+          }
+        }
+      }
+      
+      if (allFiles.length === 0) {
+        logger.warn('No files found in project directories');
+        return;
+      }
+      
+      logger.info(`Found ${allFiles.length} files to validate...`);
+      
+      const results = await validateBatch(allFiles, {
+        ...options,
+        config,
+        verbose: options.verbose
+      });
+      
+      // Group results by file type
+      const groupedResults = {};
+      for (const result of results) {
+        const type = result.fileType || 'unknown';
+        if (!groupedResults[type]) {
+          groupedResults[type] = { valid: [], invalid: [] };
+        }
+        if (result.valid) {
+          groupedResults[type].valid.push(result);
+        } else {
+          groupedResults[type].invalid.push(result);
+        }
+      }
+      
+      // Print summary by file type
+      let totalValid = 0;
+      let totalInvalid = 0;
+      
+      for (const [type, typeResults] of Object.entries(groupedResults)) {
+        const validCount = typeResults.valid.length;
+        const invalidCount = typeResults.invalid.length;
+        totalValid += validCount;
+        totalInvalid += invalidCount;
+        
+        logger.info(`\n${type.toUpperCase()}:`);
+        logger.success(`  ✓ ${validCount} valid`);
+        if (invalidCount > 0) {
+          logger.error(`  ✗ ${invalidCount} invalid`);
+          for (const result of typeResults.invalid) {
+            logger.error(`    - ${result.file}`);
+            if (result.errors && result.errors.length > 0) {
+              console.log(formatValidationErrors(result.errors, options));
+            }
+          }
+        }
+      }
+      
+      logger.info(`\nOverall: ${totalValid} valid, ${totalInvalid} invalid`);
+      
+    } catch (error) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// NEW: repair-all command for all file types
+program
+  .command('repair-all')
+  .description('Repair all files in the project by applying auto-fixes')
+  .option('-c, --config <path>', 'path to config file')
+  .option('-v, --verbose', 'verbose output')
+  .option('--dry-run', 'show what would be fixed without doing it')
+  .action(async (options) => {
+    try {
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
+      
+      logger.info('Scanning project for all supported file types...');
+      
+      // Find all files in project directories
+      const allFiles = [];
+      const fileTypes = config.fileTypes || {};
+      
+      for (const [type, typeConfig] of Object.entries(fileTypes)) {
+        for (const folder of typeConfig.folders || []) {
+          const patterns = typeConfig.extensions.map(ext => `${folder}/**/*${ext}`);
+          for (const pattern of patterns) {
+            const matches = await glob(pattern, { absolute: true });
+            allFiles.push(...matches);
+          }
+        }
+      }
+      
+      if (allFiles.length === 0) {
+        logger.warn('No files found in project directories');
+        return;
+      }
+      
+      logger.info(`Found ${allFiles.length} files to repair...`);
+      
+      const detector = new FileTypeDetector(config);
+      let repairedCount = 0;
+      let unchangedCount = 0;
+      let errorCount = 0;
+      
+      for (const filepath of allFiles) {
+        try {
+          const { data, originalFormat, filename } = await readMarkerFile(filepath);
+          const fileType = detector.detectFileType(filepath);
+          
+          logger.log(`Processing ${filename} (${fileType.type})...`);
+          
+          const result = await repairFile(data, fileType.type, {
+            ...options,
+            config,
+            verbose: options.verbose
+          });
+          
+          if (result.modified) {
+            logger.success(`✓ ${filename}: ${result.fixes.length} fixes applied`);
+            result.fixes.forEach(fix => logger.log(`  - ${fix}`));
+            
+            if (!options.dryRun) {
+              // Write back to original location
+              await writeMarkerFile(filepath, formatMarker(result.marker, originalFormat, { config }), originalFormat);
+            }
+            
+            repairedCount++;
+          } else {
+            logger.info(`- ${filename}: No fixes needed`);
+            unchangedCount++;
+          }
+          
+        } catch (error) {
+          logger.error(`✗ ${filepath}: ${error.message}`);
+          errorCount++;
+        }
+      }
+      
+      logger.info(`\nRepair complete: ${repairedCount} repaired, ${unchangedCount} unchanged, ${errorCount} errors`);
+      
+    } catch (error) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// NEW: detect command to show file type detection
+program
+  .command('detect <files...>')
+  .description('Detect file types without validation')
+  .option('-c, --config <path>', 'path to config file')
+  .option('-v, --verbose', 'verbose output')
+  .action(async (files, options) => {
+    try {
+      const config = loadConfig(options.config);
+      const logger = createLogger(options.verbose);
+      
+      // Expand glob patterns
+      const expandedFiles = [];
+      for (const pattern of files) {
+        const matches = await glob(pattern, { absolute: true });
+        expandedFiles.push(...matches);
+      }
+      
+      if (expandedFiles.length === 0) {
+        logger.warn('No files found matching the patterns');
+        return;
+      }
+      
+      const detector = new FileTypeDetector(config);
+      
+      for (const filepath of expandedFiles) {
+        const fileType = detector.detectFileType(filepath);
+        const locationValidation = detector.validateFileLocation(filepath, fileType);
+        
+        console.log(`\n${filepath}:`);
+        console.log(`  Type: ${fileType.type}`);
+        console.log(`  Schema: ${fileType.schema}`);
+        console.log(`  Confidence: ${fileType.confidence}`);
+        if (fileType.prefix) {
+          console.log(`  Prefix: ${fileType.prefix}`);
+        }
+        if (fileType.folder) {
+          console.log(`  Folder: ${fileType.folder}`);
+        }
+        console.log(`  Location: ${locationValidation.valid ? '✓' : '✗'} ${locationValidation.message}`);
+      }
+      
+    } catch (error) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// info command (updated in Iteration 2)
 program
   .command('info')
   .description('Show configuration and environment info')
   .action(() => {
     try {
-      const config = loadConfig(program.opts().config);
-      
-      console.log(chalk.cyan('\n📋 Marker Validator CLI Info\n'));
-      console.log(`Version: ${packageJson.version}`);
-      console.log(`Node: ${process.version}`);
-      console.log(`Platform: ${process.platform}`);
-      console.log(`Config: ${program.opts().config}`);
-      console.log('\nConfiguration:');
+      const config = loadConfig();
+      console.log(chalk.blue('Configuration:'));
       console.log(JSON.stringify(config, null, 2));
-      console.log();
+      
+      const detector = new FileTypeDetector(config);
+      console.log(chalk.blue('\nSupported file types:'));
+      for (const type of detector.getSupportedFileTypes()) {
+        const typeConfig = detector.getFileTypeConfig(type);
+        console.log(`  ${type}:`);
+        console.log(`    Prefixes: ${typeConfig.prefixes.join(', ')}`);
+        console.log(`    Extensions: ${typeConfig.extensions.join(', ')}`);
+        console.log(`    Folders: ${typeConfig.folders.join(', ')}`);
+        console.log(`    Schema: ${typeConfig.schema}`);
+      }
     } catch (error) {
-      console.error(chalk.red('Failed to load config:'), error.message);
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
     }
   });
 
-// Parse command line arguments
-program.parse(process.argv);
-
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
-} 
+program.parse(); 

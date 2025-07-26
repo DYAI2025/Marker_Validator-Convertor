@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/grabber/v1.0",
+  "title": "Grabber Schema",
+  "description": "Schema for GR_ files (JavaScript/Python plugins)",
+  "type": "object",
+  "required": ["id", "description", "language", "function_name"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^GR_[A-Z0-9_]+$",
+      "description": "Grabber ID with required GR_ prefix"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the grabber"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["javascript", "python"],
+      "description": "Programming language"
+    },
+    "function_name": {
+      "type": "string",
+      "description": "Main function name (e.g., run)"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Function parameters"
+    },
+    "return_type": {
+      "type": "object",
+      "description": "Expected return type"
+    },
+    "file_path": {
+      "type": "string",
+      "description": "Path to the plugin file"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required dependencies"
+    }
+  },
+  "additionalProperties": true
+} 

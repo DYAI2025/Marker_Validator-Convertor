@@ -1,0 +1,10 @@
+{
+  "id": "DETECT_ABSAGE_REGEX",
+  "description": "Höfliche Absage – Regex-Detektor",
+  "rule": {
+    "type": "regex",
+    "pattern": "(melde.*später|keine zeit|gerade stressig)",
+    "flags": "i"
+  },
+  "fire_marker": "S_ABSAGE_INDIR"
+} 

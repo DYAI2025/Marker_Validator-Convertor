@@ -1,0 +1,7 @@
+{
+    "id": "SCR_FRAUD_SCORE",
+    "target_markers": ["A_FRAUD_PAYMENT", "S_LOVE_BOMBING"],
+    "window": { "messages": 50 },
+    "aggregation": { "method": "sum" }
+  }
+  

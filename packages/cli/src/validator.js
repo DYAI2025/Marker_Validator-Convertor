@@ -10,223 +10,387 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './index.js';
 import { getPluginManager } from './plugin-loader.js';
+import { FileTypeDetector } from './file-type-detector.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Cache for loaded schemas
-const schemaCache = new Map();
+let ajvInstance = null;
 
-/**
- * Create and configure AJV instance
- * @param {Object} options - Validation options
- * @returns {Object} Configured AJV instance
- */
 function createValidator(options = {}) {
-  const ajv = new Ajv({
-    allErrors: true,
-    verbose: true,
-    strict: options.strictMode ?? false,
-    allowUnionTypes: true,
-    validateFormats: true
-  });
-  
-  // Add format validators (for date-time, etc.)
-  addFormats(ajv);
-  
-  return ajv;
+  if (!ajvInstance) {
+    ajvInstance = new Ajv({
+      allErrors: true,
+      verbose: options.verbose || false,
+      strict: options.strictMode || false,
+      allowUnionTypes: true
+    });
+    addFormats(ajvInstance);
+  }
+  return ajvInstance;
 }
 
-/**
- * Load a JSON schema from file
- * @param {string} schemaPath - Path to schema file
- * @returns {Object} Parsed schema
- */
-export async function loadSchema(schemaPath) {
-  // Check cache first
-  if (schemaCache.has(schemaPath)) {
-    return schemaCache.get(schemaPath);
-  }
-  
-  const resolvedPath = resolve(schemaPath);
-  
-  if (!existsSync(resolvedPath)) {
-    throw new Error(`Schema file not found: ${schemaPath}`);
-  }
-  
+async function loadSchema(schemaPath) {
   try {
-    const schemaContent = readFileSync(resolvedPath, 'utf8');
-    const schema = JSON.parse(schemaContent);
-    
-    // Cache the loaded schema
-    schemaCache.set(schemaPath, schema);
-    
-    return schema;
+    const fullPath = resolve(__dirname, '../../../', schemaPath);
+    if (!existsSync(fullPath)) {
+      throw new Error(`Schema file not found: ${fullPath}`);
+    }
+    const schemaContent = readFileSync(fullPath, 'utf8');
+    return JSON.parse(schemaContent);
   } catch (error) {
-    throw new Error(`Failed to load schema: ${error.message}`);
+    throw new Error(`Failed to load schema from ${schemaPath}: ${error.message}`);
   }
 }
 
-/**
- * Get schema path from config
- * @param {string} schemaType - Schema type ('default' or 'fraud')
- * @param {Object} config - Configuration object
- * @returns {string} Schema path
- */
 function getSchemaPath(schemaType, config) {
   const schemas = config?.schemas || {};
-  const schemaPath = schemas[schemaType];
-  
-  if (!schemaPath) {
-    throw new Error(`Unknown schema type: ${schemaType}`);
-  }
-  
-  // Resolve relative to config directory (which is in the project root)
-  const configDir = resolve(__dirname, '../../../config');
-  return resolve(configDir, schemaPath);
+  return schemas[schemaType] || schemas.default || 'schemas/marker.schema.v2.1.json';
 }
 
-/**
- * Validate a marker against schema
- * @param {Object} marker - Marker data to validate
- * @param {string} schemaType - Schema type to use
- * @param {Object} options - Validation options
- * @returns {Object} Validation result
- */
 export async function validateMarker(marker, schemaType = 'default', options = {}) {
   const logger = createLogger(options.verbose);
   const pluginManager = getPluginManager(options.config || {});
-  
   try {
-    // Execute beforeValidation plugins
     const modifiedMarker = await pluginManager.executeModifierHook('beforeValidation', marker);
-    
+
     const schemaPath = getSchemaPath(schemaType, options.config);
     const schema = await loadSchema(schemaPath);
-    
     const ajv = createValidator(options);
-    
-    // Always preload the base schema for reference resolution
+
+    // Add base schema to AJV instance for cross-schema validation
     if (schemaType === 'fraud') {
       const baseSchemaPath = getSchemaPath('default', options.config);
       const baseSchema = await loadSchema(baseSchemaPath);
       ajv.addSchema(baseSchema, baseSchema.$id);
     }
-    
+
     const valid = ajv.validate(schema, modifiedMarker);
-    
-    // Check ID prefix matches level
+
+    // Check ID prefix matches level (logic updated for clarity)
     let prefixValid = true;
-    let expectedPrefix = '';
-    
     if (valid && modifiedMarker.id && modifiedMarker.level) {
-      const prefixMap = {
+      const expectedPrefix = {
         1: 'A_',
         2: 'S_',
         3: 'C_',
         4: 'MM_'
-      };
+      }[modifiedMarker.level];
       
-      expectedPrefix = prefixMap[modifiedMarker.level];
-      prefixValid = modifiedMarker.id.startsWith(expectedPrefix);
-      
-      if (!prefixValid && !ajv.errors) {
-        ajv.errors = [];
-      }
-      
-      if (!prefixValid) {
+      if (expectedPrefix && !modifiedMarker.id.startsWith(expectedPrefix)) {
+        prefixValid = false;
+        ajv.errors = ajv.errors || [];
         ajv.errors.push({
-          instancePath: '/id',
-          schemaPath: '#/properties/id/pattern',
-          keyword: 'pattern',
-          params: { pattern: `^${expectedPrefix}` },
-          message: `ID should start with '${expectedPrefix}' for level ${modifiedMarker.level}`
+          keyword: 'prefix',
+          dataPath: '.id',
+          schemaPath: '#/properties/id',
+          params: { expectedPrefix, actualPrefix: modifiedMarker.id.split('_')[0] + '_' },
+          message: `ID prefix should be '${expectedPrefix}' for level ${modifiedMarker.level}`
         });
       }
     }
-    
+
     const result = {
       valid: valid && prefixValid,
       errors: ajv.errors || [],
       schema: schemaType
     };
-    
-    // Execute afterValidation plugins
+
     await pluginManager.executeHook('afterValidation', modifiedMarker, result);
-    
+
     return result;
   } catch (error) {
     logger.error(`Validation error: ${error.message}`);
-    throw error;
+    return {
+      valid: false,
+      errors: [{ message: error.message }],
+      schema: schemaType
+    };
   }
 }
 
-/**
- * Validate multiple markers in batch
- * @param {Object[]} markers - Array of markers to validate
- * @param {string} schemaType - Schema type to use
- * @param {Object} options - Validation options
- * @returns {Object} Batch validation results
- */
-export async function validateBatch(markers, schemaType = 'default', options = {}) {
+export async function validateFile(filepath, options = {}) {
+  const logger = createLogger(options.verbose);
+  const pluginManager = getPluginManager(options.config || {});
+  
+  try {
+    // Detect file type
+    const detector = new FileTypeDetector(options.config || {});
+    const fileType = detector.detectFileType(filepath);
+    
+    logger.log(`Detected file type: ${fileType.type} (confidence: ${fileType.confidence})`);
+    
+    // Validate file location
+    const locationValidation = detector.validateFileLocation(filepath, fileType);
+    if (!locationValidation.valid) {
+      logger.warn(`File location warning: ${locationValidation.message}`);
+    }
+    
+    // Get appropriate schema
+    const schemaPath = detector.getSchemaPath(fileType);
+    const schema = await loadSchema(schemaPath);
+    
+    // Create a fresh AJV instance for each file to avoid schema conflicts
+    const ajv = new Ajv({
+      allErrors: true,
+      verbose: options.verbose || false,
+      strict: options.strictMode || false,
+      allowUnionTypes: true
+    });
+    addFormats(ajv);
+    
+    // Read and parse file
+    const { data } = await import('./converter.js').then(m => m.readMarkerFile(filepath));
+    
+    // Execute beforeValidation plugins
+    const modifiedData = await pluginManager.executeModifierHook('beforeValidation', data);
+    
+    // Validate against schema
+    const valid = ajv.validate(schema, modifiedData);
+    
+    // Additional validations based on file type
+    const additionalErrors = await validateFileTypeSpecific(data, fileType, options);
+    
+    const result = {
+      valid: valid && additionalErrors.length === 0,
+      errors: [...(ajv.errors || []), ...additionalErrors],
+      schema: fileType.schema,
+      fileType: fileType.type,
+      locationValid: locationValidation.valid,
+      locationMessage: locationValidation.message
+    };
+    
+    // Execute afterValidation plugins
+    await pluginManager.executeHook('afterValidation', modifiedData, result);
+    
+    return result;
+  } catch (error) {
+    logger.error(`File validation error: ${error.message}`);
+    return {
+      valid: false,
+      errors: [{ message: error.message }],
+      fileType: 'unknown'
+    };
+  }
+}
+
+async function validateFileTypeSpecific(data, fileType, options) {
+  const errors = [];
+  
+  // Reference validation
+  if (options.config?.validation?.checkReferences !== false) {
+    const referenceErrors = await validateReferences(data, fileType, options);
+    errors.push(...referenceErrors);
+  }
+  
+  // File structure validation
+  if (options.config?.validation?.validateFileStructure !== false) {
+    const structureErrors = validateFileStructure(data, fileType);
+    errors.push(...structureErrors);
+  }
+  
+  return errors;
+}
+
+async function validateReferences(data, fileType, options) {
+  const errors = [];
+  
+  // Check for circular references
+  if (data.id) {
+    const circularErrors = checkCircularReferences(data, fileType);
+    errors.push(...circularErrors);
+  }
+  
+  // Check for invalid references
+  if (fileType.type === 'markers') {
+    const referenceErrors = await checkMarkerReferences(data, options);
+    errors.push(...referenceErrors);
+  }
+  
+  if (fileType.type === 'detects') {
+    const referenceErrors = await checkDetectReferences(data, options);
+    errors.push(...referenceErrors);
+  }
+  
+  if (fileType.type === 'chunk-analysis') {
+    const referenceErrors = await checkChunkAnalysisReferences(data, options);
+    errors.push(...referenceErrors);
+  }
+  
+  return errors;
+}
+
+function checkCircularReferences(data, fileType) {
+  const errors = [];
+  
+  // Check if ID references itself
+  if (data.id && data.composed_of) {
+    for (const item of data.composed_of) {
+      if (item.marker_ids && item.marker_ids.includes(data.id)) {
+        errors.push({
+          keyword: 'circular',
+          dataPath: '.composed_of',
+          message: `Circular reference detected: ${data.id} references itself`
+        });
+      }
+    }
+  }
+  
+  return errors;
+}
+
+async function checkMarkerReferences(data, options) {
+  const errors = [];
+  
+  // Check composed_of references
+  if (data.composed_of) {
+    for (const item of data.composed_of) {
+      if (item.marker_ids) {
+        for (const markerId of item.marker_ids) {
+          // This would require checking if the referenced marker exists
+          // For now, just validate the format
+          if (!markerId.match(/^(A|S|C|MM)_[A-Z0-9_]+$/)) {
+            errors.push({
+              keyword: 'reference',
+              dataPath: '.composed_of',
+              message: `Invalid marker reference format: ${markerId}`
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  return errors;
+}
+
+async function checkDetectReferences(data, options) {
+  const errors = [];
+  
+  // Check fire_marker reference
+  if (data.fire_marker && !data.fire_marker.match(/^(A|S|C|MM)_[A-Z0-9_]+$/)) {
+    errors.push({
+      keyword: 'reference',
+      dataPath: '.fire_marker',
+      message: `Invalid marker reference format: ${data.fire_marker}`
+    });
+  }
+  
+  return errors;
+}
+
+async function checkChunkAnalysisReferences(data, options) {
+  const errors = [];
+  
+  // Check detectors_active references
+  if (data.detectors_active) {
+    for (const detectId of data.detectors_active) {
+      if (!detectId.match(/^DETECT_[A-Z0-9_]+$/)) {
+        errors.push({
+          keyword: 'reference',
+          dataPath: '.detectors_active',
+          message: `Invalid detect reference format: ${detectId}`
+        });
+      }
+    }
+  }
+  
+  return errors;
+}
+
+function validateFileStructure(data, fileType) {
+  const errors = [];
+  
+  // Check for required fields based on file type
+  switch (fileType.type) {
+    case 'markers':
+      if (!data.description || data.description.length < 10) {
+        errors.push({
+          keyword: 'minLength',
+          dataPath: '.description',
+          message: 'Description must be at least 10 characters long'
+        });
+      }
+      if (!data.examples || data.examples.length < 2) {
+        errors.push({
+          keyword: 'minItems',
+          dataPath: '.examples',
+          message: 'At least 2 examples are required'
+        });
+      }
+      break;
+      
+    case 'schemas':
+      if (data.id?.startsWith('SCH_') && (!data.weights || Object.keys(data.weights).length === 0)) {
+        errors.push({
+          keyword: 'required',
+          dataPath: '.weights',
+          message: 'Schema must have weights configuration'
+        });
+      }
+      break;
+      
+    case 'detects':
+      if (!data.rule || !data.rule.type) {
+        errors.push({
+          keyword: 'required',
+          dataPath: '.rule.type',
+          message: 'Detect must have a rule type'
+        });
+      }
+      break;
+      
+    case 'chunk-analysis':
+      if (!data.detectors_active || data.detectors_active.length === 0) {
+        errors.push({
+          keyword: 'minItems',
+          dataPath: '.detectors_active',
+          message: 'At least one detector must be active'
+        });
+      }
+      break;
+  }
+  
+  return errors;
+}
+
+export async function validateBatch(files, options = {}) {
   const logger = createLogger(options.verbose);
   const results = [];
   
-  logger.info(`Validating ${markers.length} markers against '${schemaType}' schema...`);
-  
-  for (const marker of markers) {
-    const result = await validateMarker(marker, schemaType, options);
-    results.push(result);
-    
-    if (options.verbose) {
-      if (result.valid) {
-        logger.success(`  ✓ ${result.markerId}`);
-      } else {
-        logger.error(`  ✗ ${result.markerId}: ${result.errors.length} error(s)`);
-      }
+  for (const file of files) {
+    try {
+      const result = await validateFile(file, options);
+      results.push({
+        file,
+        ...result
+      });
+    } catch (error) {
+      logger.error(`Failed to validate ${file}: ${error.message}`);
+      results.push({
+        file,
+        valid: false,
+        errors: [{ message: error.message }],
+        fileType: 'unknown'
+      });
     }
   }
   
-  // Summary
-  const valid = results.filter(r => r.valid).length;
-  const invalid = results.filter(r => !r.valid).length;
-  const warnings = results.filter(r => r.warnings?.length > 0).length;
-  
-  return {
-    results,
-    summary: {
-      total: markers.length,
-      valid,
-      invalid,
-      warnings
-    }
-  };
+  return results;
 }
 
-/**
- * Format validation errors for display
- * @param {Object} result - Validation result
- * @returns {string[]} Formatted error messages
- */
-export function formatValidationErrors(result) {
-  if (result.valid) {
-    return [];
+export function formatValidationErrors(errors, options = {}) {
+  if (!errors || errors.length === 0) {
+    return 'No validation errors';
   }
   
-  const messages = [];
+  const formatted = errors.map((error, index) => {
+    const path = error.dataPath || error.schemaPath || 'unknown';
+    const message = error.message || 'Unknown error';
+    const keyword = error.keyword || 'validation';
+    
+    return `${index + 1}. ${keyword} at ${path}: ${message}`;
+  });
   
-  for (const error of result.errors) {
-    const field = error.field === '/' ? 'root' : error.field;
-    messages.push(`  • ${field}: ${error.message}`);
-  }
-  
-  if (result.warnings) {
-    for (const warning of result.warnings) {
-      messages.push(`  ⚠ ${warning.field}: ${warning.message}`);
-      if (warning.suggestion) {
-        messages.push(`    → Suggestion: ${warning.suggestion}`);
-      }
-    }
-  }
-  
-  return messages;
+  return formatted.join('\n');
 } 

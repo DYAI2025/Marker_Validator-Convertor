@@ -1,0 +1,9 @@
+{
+  "id": "SCH_TEST",
+  "desciption": "Test schema with typos and missing fields",
+  "weghts": {
+    "A_": 1.0,
+    "S_": 1.0
+  },
+  "windw": { "mesages": 100 }
+} 

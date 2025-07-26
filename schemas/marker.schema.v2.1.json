@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/marker/v2.1",
+  "title": "Marker Schema v2.1 - Extended",
+  "description": "Extended schema for all marker levels (A_, S_, C_, MM_) with optional fields",
+  "type": "object",
+  "required": ["id", "marker", "description", "level", "version", "status", "author", "created", "last_modified", "tags", "category"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(A|S|C|MM)_[A-Z0-9_]+$",
+      "description": "Unique identifier with required prefix (A_, S_, C_, or MM_)"
+    },
+    "marker": {
+      "type": "string",
+      "description": "Marker name/label in CAPS with underscores"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Clear and sufficient description"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "1=atomic, 2=semantic, 3=cluster, 4=meta"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Version in semantic versioning format"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "archived"],
+      "description": "Current status of the marker"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author of the marker"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp in ISO format"
+    },
+    "last_modified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last modification timestamp in ISO format"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "At least one tag required"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category appropriate for the level"
+    },
+    "pattern": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Pattern array, except for pure meta markers"
+    },
+    "examples": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "description": "At least 2-3 examples per marker"
+    },
+    "risk_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 1,
+      "description": "Risk score (1-5)"
+    },
+    "window": {
+      "type": "object",
+      "properties": {
+        "messages": { "type": "integer" },
+        "seconds": { "type": "integer" }
+      },
+      "description": "Window configuration for messages or seconds"
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "weight": { "type": "number" },
+        "impact": { "type": "number" },
+        "decay": { "type": "number" }
+      },
+      "description": "Scoring configuration"
+    },
+    "composed_of": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["atomic", "semantic", "cluster"] },
+          "marker_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "description": "Composed markers (for S_, C_, MM_)"
+    },
+    "activation_logic": {
+      "type": "string",
+      "enum": ["ANY", "ALL"],
+      "description": "Activation logic for composed markers"
+    },
+    "semantic_rules": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Semantic rules (for S_ markers)"
+    },
+    "cluster_components": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Cluster components (for C_ markers)"
+    },
+    "trigger_threshold": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Minimum number of components to trigger (for C_ markers)"
+    },
+    "required_clusters": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required clusters (for MM_ markers)"
+    },
+    "meta_analysis": {
+      "type": "object",
+      "properties": {
+        "temporal_pattern": { "type": "string" },
+        "frequency_threshold": { "type": "integer" },
+        "context_sensitivity": { "type": "string" }
+      },
+      "description": "Meta analysis configuration (for MM_ markers)"
+    },
+    "x_migrated_from": { "type": "string" },
+    "x_migration_ts": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "level": { "const": 1 } }
+      },
+      "then": {
+        "properties": {
+          "id": { "pattern": "^A_[A-Z0-9_]+$" },
+          "category": { "const": "ATOMIC" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "level": { "const": 2 } }
+      },
+      "then": {
+        "properties": {
+          "id": { "pattern": "^S_[A-Z0-9_]+$" },
+          "category": { "const": "SEMANTIC" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "level": { "const": 3 } }
+      },
+      "then": {
+        "properties": {
+          "id": { "pattern": "^C_[A-Z0-9_]+$" },
+          "category": { "const": "CLUSTER" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "level": { "const": 4 } }
+      },
+      "then": {
+        "properties": {
+          "id": { "pattern": "^MM_[A-Z0-9_]+$" },
+          "category": { "const": "META" }
+        }
+      }
+    }
+  ]
+} 

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/profiler/v1.0",
+  "title": "Profiler Schema",
+  "description": "Schema for PROF_ files (Python scripts)",
+  "type": "object",
+  "required": ["id", "description", "class_name", "methods"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^PROF_[A-Z0-9_]+$",
+      "description": "Profiler ID with required PROF_ prefix"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the profiler"
+    },
+    "class_name": {
+      "type": "string",
+      "description": "Main class name in the Python file"
+    },
+    "methods": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required methods (e.g., update, drifted)"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Configuration parameters"
+    },
+    "file_path": {
+      "type": "string",
+      "description": "Path to the Python file"
+    }
+  },
+  "additionalProperties": true
+} 

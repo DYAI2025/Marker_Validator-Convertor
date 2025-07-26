@@ -1,0 +1,93 @@
+---
+# Analyseblöcke für Marker (konkrete Anwendungen)
+
+analyse_anticipation_dynamic_manipulation_marker:
+  marker: "anticipation_dynamic_manipulation_marker"
+  auslösende_stelle: >
+    "Mach ruhig, ich bin dann halt weg."
+
+  implizite_botschaft: >
+    Die Aussage wirkt wie Rückzug, ist aber eine bewusst eingesetzte Kontrolle. Sie stellt die Entscheidung scheinbar frei,
+    zielt aber auf Schuld oder Reaktionspflicht des Gegenübers. Die Handlung nutzt systemisches Vorwissen, um Verhalten zu steuern.
+
+  reaktive_wirkung: >
+    Der Andere reagiert mit Beschwichtigung, Rechtfertigung oder Näheangeboten – um den Bruch zu verhindern. Das stabilisiert ein Muster von
+    Aktion → Reaktion → Rechtfertigung → Machtverlust.
+
+  archetypischer_schatten: >
+    Der "Marionettenspieler": Steuert andere über subtile Drohung und Rückzug, bleibt selbst scheinbar harmlos.
+    Aktiviert auch das "hilflose Kind", das Kontrolle durch Ohnmacht ausübt.
+
+  systemische_dynamik: >
+    Der Marker erzeugt eine doppelte Bewegung: Ein Partner zieht sich zurück, der andere wird reaktiv und verliert Autonomie.
+    Die Beziehung dreht sich um Steuerung statt Begegnung.
+
+  integrationsvorschlag: >
+    Bewusstes Entschleunigen: "Ich spüre, dass ich antizipiere, wie du reagierst. Ich will dich nicht steuern – kannst du mir sagen, was du gerade wirklich brauchst?“
+    Dadurch wird Steuerung in Dialog transformiert.
+
+---
+
+analyse_schuldmarker:
+  marker: "schuldmarker"
+  auslösende_stelle: >
+    "Ich bin schuld daran, dass alles kaputtgeht. Ich kann das nicht mehr hören."
+
+  inneres_grundgefühl: >
+    Tiefe Selbstanklage, ein Gefühl moralischen oder emotionalen Versagens. Schuld wird zur Identität.
+
+  typische_selbstreaktion: >
+    Rückzug, Rechtfertigung, Opferhaltung oder übermäßige Kompensation (z. B. sich klein machen, um Frieden zu erzwingen).
+
+  archetypischer_schatten: >
+    Der "Sündenbock" im inneren Kind. Oder: Der Bußfertige, der durch Selbstverleugnung Erlösung sucht.
+
+  systemische_dynamik: >
+    Schuld erzeugt Spannungen: Der Andere wird zum Retter, Richter oder Mit-Leidenden gemacht. Beziehung verliert Gleichgewicht.
+
+  integrationsvorschlag: >
+    Schuld als Signal für ungenutzte Verantwortung verstehen: Was wäre ein kleiner, aktiver, wahrhaftiger Schritt, statt Selbstbestrafung?
+
+---
+
+analyse_scham_profil:
+  marker: "scham_profil"
+  auslösende_stelle: >
+    "Ich hasse mich für das, was ich wieder getan habe. Ich kann mich selbst nicht ertragen."
+
+  inneres_grundgefühl: >
+    Abwertung der eigenen Existenz, nicht nur des Handelns. Scham formt Identität negativ, als "ich bin falsch".
+
+  typische_selbstreaktion: >
+    Rückzug, innerer Kollaps, Selbstabwertung, sozialer Selbstentzug.
+
+  archetypischer_schatten: >
+    Der "Verstoßene" – Archetyp des Exilierten, der glaubt, keine Daseinsberechtigung zu haben.
+
+  systemische_dynamik: >
+    Scham lähmt Kommunikation. Der Andere wird zur Projektionsfläche – wird als bedrohlich oder moralisch überlegen erlebt.
+
+  integrationsvorschlag: >
+    Sanfte Spiegelung des wahren Selbst: "Ich sehe dich – nicht dein Verhalten." Radikale Akzeptanz statt Beruhigung.
+
+---
+
+analyse_ambivalenzmarker:
+  marker: "ambivalenzmarker"
+  auslösende_stelle: >
+    "Ich will, aber ich kann nicht. Ich sehne mich und hab Angst zugleich."
+
+  innere_polarität: >
+    Nähebedürfnis versus Verlustangst, Selbstverwirklichung versus Anpassung, Präsenz versus Rückzug
+
+  entscheidungsvermeidung: >
+    Handlungsaufschub, vage Aussagen, wechselhafte Stimmung, plötzlicher Themenwechsel
+
+  archetypischer_schatten: >
+    Der "Zerissene": Schattenform des Helden, der keine Wahl treffen kann und damit weder Abenteuer noch Heimat erfährt.
+
+  systemische_dynamik: >
+    Das Gegenüber erlebt Unklarheit, muss kompensieren oder wird selbst ambivalent. Nähe wird unbewusst sabotiert.
+
+  integrationsvorschlag: >
+    Sichtbarmachen beider Pole: "Ich merke, dass in mir zwei Bewegungen gleichzeitig da sind – darf das so sein?" Klarheit entsteht aus Halten, nicht aus Entscheidung.

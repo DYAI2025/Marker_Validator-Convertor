@@ -1,0 +1,9 @@
+{
+    "id": "DETECT_FRAUD_MISSING_PATTERN",
+    "rule": {
+      "type": "regex"
+      // FEHLT: pattern
+    },
+    "fire_marker": "A_FRAUD_PAYMENT"
+  }
+  

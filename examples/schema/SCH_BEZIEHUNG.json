@@ -1,0 +1,17 @@
+{
+  "id": "SCH_BEZIEHUNG",
+  "description": "Analyse-Profil: Beziehung & Bindungsdynamik",
+  "weights": {
+    "A_": 1.0,
+    "S_": 1.0,
+    "C_": 1.2,
+    "MM_": 1.5
+  },
+  "window": { "messages": 120 },
+  "decay": 0.01,
+  "risk_thresholds": {
+    "green": 0,
+    "yellow": 10,
+    "red": 25
+  }
+} 

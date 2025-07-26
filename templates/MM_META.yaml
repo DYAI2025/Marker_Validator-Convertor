@@ -1,0 +1,24 @@
+# Level 4 – Meta Marker
+id: MM_EXAMPLE_META
+marker: EXAMPLE_META
+description: "Tracks strategic distancing over time."
+level: 4
+version: "1.0.0"
+status: draft
+author: "template"
+created: "2024-01-01T00:00:00Z"
+last_modified: "2024-01-01T00:00:00Z"
+tags: [meta, strategic, high-level]
+category: "META"
+risk_score: 4
+required_clusters:
+  - C_EXAMPLE_CLUSTER
+  - C_MANIPULATION
+meta_analysis:
+  temporal_pattern: "Patterns evolve over time"
+  frequency_threshold: 5
+  context_sensitivity: "high"
+activation_logic: "ALL"
+window: { messages: 50 }
+examples:
+  - "Systematisches Hinhalten kombiniert mit Distanzierung."

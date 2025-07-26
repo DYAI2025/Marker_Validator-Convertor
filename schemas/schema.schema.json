@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/schema/v1.0",
+  "title": "Schema Schema",
+  "description": "Schema for SCH_ and MASTER_SCH_ files",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(SCH|MASTER_SCH)_[A-Z0-9_]+$",
+      "description": "Schema ID with required prefix"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the schema"
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Mapping of marker IDs to weight factors"
+    },
+    "window": {
+      "type": "object",
+      "properties": {
+        "messages": { "type": "integer" },
+        "seconds": { "type": "integer" }
+      },
+      "description": "Window configuration"
+    },
+    "decay": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Decay factor (optional)"
+    },
+    "risk_thresholds": {
+      "type": "object",
+      "properties": {
+        "green": { "type": "number" },
+        "yellow": { "type": "number" },
+        "red": { "type": "number" }
+      },
+      "description": "Risk level thresholds"
+    },
+    "active_schemata": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of active schemas (for MASTER_SCH_)"
+    },
+    "priority": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "Priority mapping (for MASTER_SCH_)"
+    },
+    "fusion": {
+      "type": "string",
+      "enum": ["multiply", "sum", "max"],
+      "description": "Fusion method (for MASTER_SCH_)"
+    },
+    "drift_axes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Drift axes configuration"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "id": { "pattern": "^SCH_" } }
+      },
+      "then": {
+        "required": ["weights", "window"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "id": { "pattern": "^MASTER_SCH_" } }
+      },
+      "then": {
+        "required": ["active_schemata", "priority", "fusion"]
+      }
+    }
+  ]
+} 

@@ -1,0 +1,12 @@
+{
+    "id": "DETECT_EXAMPLE_STDDEV",
+    "description": "Std-dev trigger on speaker valence in a 10-message window",
+    "rule": {
+      "type": "stddev",
+      "source": "speaker_valence",     /* key used by your feature extractor */
+      "window": 10,
+      "threshold": 0.45               /* fire if σ ≥ threshold */
+    },
+    "fire_marker": "S_EXAMPLE_SEMANTIC"
+  }
+  

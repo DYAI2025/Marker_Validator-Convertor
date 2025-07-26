@@ -1,0 +1,20 @@
+{
+    "$id": "https://example.org/schemas/marker/master/2.1",
+    "allOf": [
+      { "$ref": "marker.schema.v2.json" },
+      {
+        "properties": {
+          "risk_score":        { "type":"number" },
+          "category":          { "type":"string" },
+          "cluster_components":{ "type":"array","items":{"type":"string"} },
+          "trigger_threshold": { "type":"number" },
+          "semantic_rules":    { "type":"array","items":{"type":"string"} },
+          "required_clusters": { "type":"array","items":{"type":"string"} },
+          "meta_analysis":     { "type":"object" },
+          "marker":            { "type":"string" }
+        },
+        "additionalProperties": true
+      }
+    ]
+  }
+  

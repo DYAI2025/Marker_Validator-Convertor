@@ -1,8 +1,59 @@
 {
   "version": "1.0.0",
   "schemas": {
-    "default": "../schemas/marker.schema.v2.json",
-    "fraud": "../schemas/fraud-markers.schema.json"
+    "marker": "schemas/marker.schema.v2.1.json",
+    "schema": "schemas/schema.schema.json",
+    "detect": "schemas/detect.schema.json",
+    "chunk-analysis": "schemas/chunk-analysis.schema.json",
+    "score": "schemas/score.schema.json",
+    "profiler": "schemas/profiler.schema.json",
+    "grabber": "schemas/grabber.schema.json",
+    "default": "schemas/marker.schema.v2.1.json",
+    "fraud": "schemas/marker.schema.v2.1.json"
+  },
+  "fileTypes": {
+    "markers": {
+      "prefixes": ["A_", "S_", "C_", "MM_"],
+      "extensions": [".yaml", ".yml", ".json"],
+      "folders": ["markers/atomic", "markers/semantic", "markers/cluster", "markers/meta"],
+      "schema": "marker"
+    },
+    "schemas": {
+      "prefixes": ["SCH_", "MASTER_SCH_"],
+      "extensions": [".json"],
+      "folders": ["schemata"],
+      "schema": "schema"
+    },
+    "detects": {
+      "prefixes": ["DETECT_"],
+      "extensions": [".json"],
+      "folders": ["detect"],
+      "schema": "detect"
+    },
+    "chunk-analysis": {
+      "prefixes": ["CHA_"],
+      "extensions": [".yaml", ".yml"],
+      "folders": ["chunk_analysis"],
+      "schema": "chunk-analysis"
+    },
+    "scores": {
+      "prefixes": ["SCR_"],
+      "extensions": [".json"],
+      "folders": ["scores"],
+      "schema": "score"
+    },
+    "profilers": {
+      "prefixes": ["PROF_"],
+      "extensions": [".py"],
+      "folders": ["profiler"],
+      "schema": "profiler"
+    },
+    "grabbers": {
+      "prefixes": ["GR_"],
+      "extensions": [".js", ".py"],
+      "folders": ["plugins", "grabber_meta"],
+      "schema": "grabber"
+    }
   },
   "outputDirs": {
     "json": "out/json",
@@ -21,12 +72,18 @@
     "autoMigratePrefix": true,
     "normalizePatterns": true,
     "fallbackAuthor": "auto_import",
-    "addMigrationMetadata": true
+    "addMigrationMetadata": true,
+    "autoFixArrays": true,
+    "autoFixDefaults": true,
+    "autoFixRiskThresholds": true,
+    "autoFixWindowDefaults": true
   },
   "validation": {
     "strictMode": false,
     "reportLevel": "error",
-    "allowAdditionalProperties": true
+    "allowAdditionalProperties": true,
+    "checkReferences": true,
+    "validateFileStructure": true
   },
   "export": {
     "prettyPrint": true,
@@ -36,7 +93,7 @@
   },
   "plugins": {
     "enabled": true,
-    "directory": "../plugins",
-    "autoLoad": ["sample-plugin.js"]
+    "directory": "plugins",
+    "autoLoad": ["kimi-suggest-plugin.js", "timestamp-plugin.js"]
   }
-} 
+}

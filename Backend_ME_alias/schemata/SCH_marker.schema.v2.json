@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/marker/v2.0",
+  "title": "Marker Schema v2.0",
+  "description": "Schema for validating marker definitions with prefix requirements",
+  "type": "object",
+  "required": ["id", "marker", "description", "level", "version", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(A|S|C|MM)_[A-Z0-9_]+$",
+      "description": "Unique identifier with required prefix (A_, S_, C_, or MM_)"
+    },
+    "marker": {
+      "type": "string",
+      "description": "The marker name/identifier"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Detailed description of the marker"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "Marker level (1=A, 2=S, 3=C, 4=MM)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "archived"],
+      "description": "Current status of the marker"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author of the marker"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation timestamp in ISO format"
+    },
+    "last_modified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last modification timestamp in ISO format"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "List of tags for categorization"
+    },
+    "pattern": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Single pattern as string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Multiple patterns as array"
+        }
+      ],
+      "description": "Pattern(s) for detection"
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Example uses of the marker"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category for grouping markers"
+    },
+    "risk_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Risk level (1=low, 5=high)"
+    },
+    "x_migrated_from": {
+      "type": "string",
+      "description": "Original ID before migration (QA metadata)"
+    },
+    "x_migration_ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of migration (QA metadata)"
+    }
+  },
+  "additionalProperties": true
+} 

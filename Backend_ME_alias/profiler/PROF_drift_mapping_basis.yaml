@@ -1,0 +1,4 @@
+baseline_axes:
+  - speaker_valence
+  - avg_token_length
+  - emoji_rate

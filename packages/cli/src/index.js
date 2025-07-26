@@ -11,53 +11,45 @@ import chalk from 'chalk';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load default configuration
 export function loadConfig(configPath) {
   try {
     const defaultPath = resolve(__dirname, '../../../config/marker-tool.default.json');
-    const config = configPath 
+    const config = configPath
       ? JSON.parse(readFileSync(resolve(configPath), 'utf8'))
       : JSON.parse(readFileSync(defaultPath, 'utf8'));
-      
+
     // Ensure all config sections exist
     config.schemas = config.schemas || {};
+    config.fileTypes = config.fileTypes || {};
     config.outputDirs = config.outputDirs || {};
     config.processing = config.processing || {};
     config.repair = config.repair || {};
     config.validation = config.validation || {};
     config.export = config.export || {
-      prettyPrint: true,
-      yamlIndent: 2,
-      jsonIndent: 2,
-      sortKeys: false
+      prettyPrint: true, yamlIndent: 2, jsonIndent: 2, sortKeys: false
     };
     config.plugins = config.plugins || {
-      enabled: true,
-      directory: '../plugins',
-      autoLoad: []
+      enabled: true, directory: '../plugins', autoLoad: []
     };
-    
     return config;
   } catch (error) {
-    console.error(chalk.red(`Failed to load config: ${error.message}`));
-    process.exit(1);
+    throw new Error(`Failed to load config: ${error.message}`);
   }
 }
 
-// Utility function to determine file type
 export function getFileType(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  if (ext === 'yaml' || ext === 'yml') return 'yaml';
-  if (ext === 'json') return 'json';
+  const extension = filename.toLowerCase();
+  if (extension.endsWith('.yaml') || extension.endsWith('.yml')) {
+    return 'yaml';
+  } else if (extension.endsWith('.json')) {
+    return 'json';
+  }
   return 'unknown';
 }
 
-// Create logger
 export function createLogger(verbose = false) {
   return {
-    log: (message) => {
-      if (verbose) console.log(chalk.gray(`[LOG] ${message}`));
-    },
+    log: (message) => { if (verbose) console.log(chalk.gray(`[LOG] ${message}`)); },
     info: (message) => console.log(chalk.blue(`ℹ ${message}`)),
     success: (message) => console.log(chalk.green(`✓ ${message}`)),
     warn: (message) => console.log(chalk.yellow(`⚠ ${message}`)),
@@ -65,9 +57,9 @@ export function createLogger(verbose = false) {
   };
 }
 
-// Export all modules
 export * from './converter.js';
 export * from './validator.js';
 export * from './repair.js';
 export * from './plugin-api.js';
-export * from './plugin-loader.js'; 
+export * from './plugin-loader.js';
+export * from './file-type-detector.js'; 

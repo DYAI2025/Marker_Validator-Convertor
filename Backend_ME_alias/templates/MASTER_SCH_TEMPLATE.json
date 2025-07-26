@@ -1,0 +1,15 @@
+{
+    "id": "MASTER_SCH_CORE",
+    "active_schemas": [
+      "SCH_DEFAULT.json",
+      "SCH_BEZIEHUNG.json",
+      "SCH_FRAUD.json"
+    ],
+    "priority": {
+      "SCH_FRAUD.json":      0.9,
+      "SCH_BEZIEHUNG.json":  0.7,
+      "SCH_DEFAULT.json":    0.5
+    },
+    "fusion": "multiply"  // later: sum | max
+  }
+  

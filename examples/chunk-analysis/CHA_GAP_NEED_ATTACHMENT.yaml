@@ -1,0 +1,17 @@
+id: CHA_GAP_NEED_ATTACHMENT
+description: "Chunk-Analyse – prüft Lücken zwischen Bedürfnis und Bindung"
+detectors_active:
+  - DETECT_ABSAGE_REGEX
+  - DETECT_EMO_VOLATILE
+high_level_snapshot:
+  include_levels: [C_, MM_]
+  top_k: 10
+drift_axes:
+  - speaker_valence
+  - avg_token_length
+scoring:
+  weight_multiplier: 1.3
+outputs:
+  show_markers: true
+  show_drift: true
+  store_json: true 

@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Sentinel Marker Matcher
+  description: Applies YAML-defined semantic and emotional markers to transcript text and returns high-level insights.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000  # Falls du lokal ein Flask-App startest
+paths:
+  /match:
+    post:
+      operationId: applyMarkers
+      summary: Match transcript text against psychological or emotional markers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Transcript text to analyze
+      responses:
+        '200':
+          description: List of matching markers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  markers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        category:
+                          type: string
+                        description:
+                          type: string
