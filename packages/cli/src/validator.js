@@ -6,7 +6,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { resolve, dirname, basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { createLogger } from './index.js';
 import { getPluginManager } from './plugin-loader.js';
@@ -14,6 +14,13 @@ import { FileTypeDetector } from './file-type-detector.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const LEVEL_PREFIX_MAP = {
+  1: 'A_',
+  2: 'S_',
+  3: 'C_',
+  4: 'MM_'
+};
 
 let ajvInstance = null;
 
@@ -149,7 +156,7 @@ export async function validateFile(filepath, options = {}) {
     const valid = ajv.validate(schema, modifiedData);
     
     // Additional validations based on file type
-    const additionalErrors = await validateFileTypeSpecific(data, fileType, options);
+    const additionalErrors = await validateFileTypeSpecific(data, fileType, filepath, options);
     
     const result = {
       valid: valid && additionalErrors.length === 0,
@@ -174,7 +181,7 @@ export async function validateFile(filepath, options = {}) {
   }
 }
 
-async function validateFileTypeSpecific(data, fileType, options) {
+async function validateFileTypeSpecific(data, fileType, filepath, options) {
   const errors = [];
   
   // Reference validation
@@ -187,6 +194,31 @@ async function validateFileTypeSpecific(data, fileType, options) {
   if (options.config?.validation?.validateFileStructure !== false) {
     const structureErrors = validateFileStructure(data, fileType);
     errors.push(...structureErrors);
+  }
+
+  // Filename prefix validation for marker files
+  if (fileType.type === 'markers' && filepath) {
+    const base = basename(filepath, extname(filepath));
+    const idPrefixMatch = data.id ? data.id.match(/^(A|S|C|MM)_/) : null;
+
+    // Filename should start with the marker prefix
+    const expectedPrefix = idPrefixMatch ? idPrefixMatch[0] : LEVEL_PREFIX_MAP[data.level];
+    if (expectedPrefix && !base.startsWith(expectedPrefix)) {
+      errors.push({
+        keyword: 'filenamePrefix',
+        dataPath: '',
+        message: `Filename should start with '${expectedPrefix}'`
+      });
+    }
+
+    // Also report missing prefix in ID
+    if (data.id && !idPrefixMatch && expectedPrefix) {
+      errors.push({
+        keyword: 'prefix',
+        dataPath: '.id',
+        message: `ID prefix should be '${expectedPrefix}'`
+      });
+    }
   }
   
   return errors;
