@@ -195,22 +195,25 @@ function App() {
               JSON.parse(content); // Validiert JSON
             }
             processedContent = content; // Behalte Original-Inhalt
-            outputFileName = `validated_${file.name}`;
+            outputFileName = file.name; // BEHALTE ORIGINAL-NAMEN!
           } catch (parseError) {
             throw new Error(`Validation failed: ${parseError.message}`);
           }
         } else if (command === 'repair') {
           // Reparatur (hier würden wir die echte Repair-Logik verwenden)
           processedContent = content; // Für jetzt behalten wir den Original-Inhalt
-          outputFileName = `repaired_${file.name}`;
+          // Nur umbenennen wenn tatsächlich repariert wurde
+          outputFileName = content !== processedContent ? `repaired_${file.name}` : file.name;
         }
         
         const result = {
           file: file.name,
           type: file.type,
           status: 'success',
-          details: `${command === 'convert' ? 'Converted' : command === 'validate' ? 'Validated' : 'Repaired'} ${file.name} successfully`,
-          outputFile: outputFileName,
+          details: command === 'validate' 
+            ? `✅ ${file.name} ist gültig (keine Datei heruntergeladen)` 
+            : `${command === 'convert' ? 'Converted' : 'Repaired'} ${file.name} successfully`,
+          outputFile: command === 'validate' ? 'Kein Download' : outputFileName,
           processedContent: processedContent
         };
         
@@ -225,9 +228,17 @@ function App() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = outputFileName;
-        a.click();
-        URL.revokeObjectURL(url);
+        
+        // SICHERHEIT: Bei Validierung KEINE Datei herunterladen, nur Status anzeigen
+        if (command === 'validate') {
+          // Kein Download bei Validierung - nur Status anzeigen
+          URL.revokeObjectURL(url);
+        } else {
+          // Download nur bei Konvertierung oder Reparatur
+          a.download = outputFileName;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
         
       } catch (error) {
         processedResults.push({

@@ -229,14 +229,14 @@ export async function repairMarker(marker, options = {}) {
     }
   }
 
-  // Add missing default values
+  // Add missing default values only if they're truly missing
   if (config.autoFixDefaults !== false) {
     if (!repairedMarker.status) {
       repairedMarker.status = 'draft';
       fixes.push('Added default status: draft');
       modified = true;
     }
-    if (!repairedMarker.risk_score) {
+    if (repairedMarker.risk_score === undefined || repairedMarker.risk_score === null) {
       repairedMarker.risk_score = 1;
       fixes.push('Added default risk_score: 1');
       modified = true;
@@ -246,9 +246,24 @@ export async function repairMarker(marker, options = {}) {
       fixes.push(`Added default author: ${repairedMarker.author}`);
       modified = true;
     }
+    if (!repairedMarker.version) {
+      repairedMarker.version = '1.0.0';
+      fixes.push('Added default version: 1.0.0');
+      modified = true;
+    }
+    if (!repairedMarker.tags) {
+      repairedMarker.tags = ['auto-import'];
+      fixes.push('Added default tags: [auto-import]');
+      modified = true;
+    }
+    if (!repairedMarker.category) {
+      repairedMarker.category = 'SEMANTIC';
+      fixes.push('Added default category: SEMANTIC');
+      modified = true;
+    }
   }
 
-  // Normalize dates
+  // Normalize dates only if they're missing
   if (config.autoFixDates !== false) {
     if (!repairedMarker.created) {
       repairedMarker.created = normalizeDate();
@@ -262,7 +277,7 @@ export async function repairMarker(marker, options = {}) {
     }
   }
 
-  // Normalize patterns to arrays
+  // Normalize patterns to arrays only if needed
   if (config.normalizePatterns !== false && repairedMarker.pattern) {
     const { normalized, modified: patternModified } = normalizePatterns(repairedMarker);
     if (patternModified) {
@@ -272,29 +287,104 @@ export async function repairMarker(marker, options = {}) {
     }
   }
 
-  // Auto-migrate prefix based on level
-  if (config.autoMigratePrefix !== false && repairedMarker.level) {
-    const { marker: migratedMarker, migrated, originalId, fixes: migrationFixes } = migratePrefix(repairedMarker);
-    if (migrated) {
-      repairedMarker = migratedMarker;
-      fixes.push(...migrationFixes);
-      if (config.addMigrationMetadata !== false && originalId) {
-        repairedMarker.x_migrated_from = originalId;
-        repairedMarker.x_migration_ts = new Date().toISOString();
-        fixes.push('Added migration metadata');
-      }
+  // Fix nested marker structure - extract marker data from nested object
+  if (repairedMarker.marker && typeof repairedMarker.marker === 'object') {
+    const nestedMarker = repairedMarker.marker;
+    
+    // Extract common fields from nested structure
+    if (nestedMarker.id && !repairedMarker.id) {
+      repairedMarker.id = nestedMarker.id;
+      fixes.push('Extracted ID from nested marker structure');
+      modified = true;
+    }
+    if (nestedMarker.description && !repairedMarker.description) {
+      repairedMarker.description = nestedMarker.description;
+      fixes.push('Extracted description from nested marker structure');
+      modified = true;
+    }
+    if (nestedMarker.level && !repairedMarker.level) {
+      repairedMarker.level = nestedMarker.level;
+      fixes.push('Extracted level from nested marker structure');
+      modified = true;
+    }
+    if (nestedMarker.pattern && !repairedMarker.pattern) {
+      repairedMarker.pattern = nestedMarker.pattern;
+      fixes.push('Extracted pattern from nested marker structure');
+      modified = true;
+    }
+    if (nestedMarker.examples && !repairedMarker.examples) {
+      repairedMarker.examples = nestedMarker.examples;
+      fixes.push('Extracted examples from nested marker structure');
+      modified = true;
+    }
+    
+    // Convert nested marker to string name
+    if (nestedMarker.name) {
+      repairedMarker.marker = nestedMarker.name;
+      fixes.push('Converted nested marker to string format');
       modified = true;
     }
   }
 
-  // Generate ID if missing
+  // Also check for marker_name field (alternative to nested structure)
+  if (repairedMarker.marker_name && !repairedMarker.marker) {
+    if (typeof repairedMarker.marker_name === 'string') {
+      repairedMarker.marker = repairedMarker.marker_name;
+      fixes.push('Used marker_name as marker field');
+      modified = true;
+    } else if (typeof repairedMarker.marker_name === 'object' && repairedMarker.marker_name.name) {
+      repairedMarker.marker = repairedMarker.marker_name.name;
+      // Extract other fields from marker_name object
+      if (repairedMarker.marker_name.id && !repairedMarker.id) {
+        repairedMarker.id = repairedMarker.marker_name.id;
+        fixes.push('Extracted ID from marker_name object');
+        modified = true;
+      }
+      if (repairedMarker.marker_name.description && !repairedMarker.description) {
+        repairedMarker.description = repairedMarker.marker_name.description;
+        fixes.push('Extracted description from marker_name object');
+        modified = true;
+      }
+      if (repairedMarker.marker_name.level && !repairedMarker.level) {
+        repairedMarker.level = repairedMarker.marker_name.level;
+        fixes.push('Extracted level from marker_name object');
+        modified = true;
+      }
+    }
+  }
+
+  // Fix prefix issues - this is CRITICAL for marker validation
+  if (repairedMarker.level && repairedMarker.id) {
+    const expectedPrefix = LEVEL_PREFIX_MAP[repairedMarker.level];
+    if (expectedPrefix) {
+      const currentPrefix = repairedMarker.id.match(/^([A-Z]+)_/)?.[1];
+      const expectedPrefixWithoutUnderscore = expectedPrefix.replace('_', '');
+      
+      // Always fix if prefix doesn't match the expected one for the level
+      if (currentPrefix !== expectedPrefixWithoutUnderscore) {
+        const { marker: migratedMarker, migrated, originalId, fixes: migrationFixes } = migratePrefix(repairedMarker);
+        if (migrated) {
+          repairedMarker = migratedMarker;
+          fixes.push(...migrationFixes);
+          if (config.addMigrationMetadata === true && originalId) {
+            repairedMarker.x_migrated_from = originalId;
+            repairedMarker.x_migration_ts = new Date().toISOString();
+            fixes.push('Added migration metadata');
+          }
+          modified = true;
+        }
+      }
+    }
+  }
+
+  // Generate ID only if completely missing
   if (!repairedMarker.id && repairedMarker.marker && repairedMarker.level) {
     repairedMarker.id = generateMarkerId(repairedMarker.marker, repairedMarker.level);
     fixes.push(`Generated ID: ${repairedMarker.id}`);
     modified = true;
   }
 
-  // Convert tags/examples to arrays if they're strings
+  // Convert tags/examples to arrays only if they're strings
   if (repairedMarker.tags && typeof repairedMarker.tags === 'string') {
     repairedMarker.tags = [repairedMarker.tags];
     fixes.push('Converted tags to array');
@@ -305,8 +395,20 @@ export async function repairMarker(marker, options = {}) {
     fixes.push('Converted examples to array');
     modified = true;
   }
+  
+  // Ensure at least 2 examples for validation
+  if (!repairedMarker.examples || repairedMarker.examples.length < 2) {
+    if (!repairedMarker.examples) {
+      repairedMarker.examples = [];
+    }
+    while (repairedMarker.examples.length < 2) {
+      repairedMarker.examples.push(`Example ${repairedMarker.examples.length + 1}`);
+    }
+    fixes.push('Added minimum required examples');
+    modified = true;
+  }
 
-  // Trim whitespace
+  // Trim whitespace only if there's actual whitespace
   if (repairedMarker.description) {
     const trimmed = repairedMarker.description.trim();
     if (trimmed !== repairedMarker.description) {
@@ -343,8 +445,14 @@ export function migratePrefix(marker) {
   }
 
   const currentPrefix = marker.id.match(/^([A-Z]+)_/)?.[1];
+  const expectedPrefixWithoutUnderscore = expectedPrefix.replace('_', '');
 
-  if (!currentPrefix || currentPrefix !== expectedPrefix.replace('_', '')) {
+  // Only migrate if the prefix is completely wrong or missing
+  // Don't migrate if the current prefix is already valid (A_, S_, C_, MM_)
+  const validPrefixes = ['A', 'S', 'C', 'MM'];
+  const hasValidPrefix = validPrefixes.some(prefix => marker.id.startsWith(prefix + '_'));
+  
+  if (!currentPrefix || (!hasValidPrefix && currentPrefix !== expectedPrefixWithoutUnderscore)) {
     originalId = marker.id;
     const suffix = marker.id.replace(/^[A-Z]*_?/, '');
     const cleanSuffix = suffix.replace(/^_+/, '');
@@ -353,6 +461,7 @@ export function migratePrefix(marker) {
     fixes.push(`Migrated ID prefix to '${expectedPrefix}' for level ${marker.level}`);
     migrated = true;
   }
+  
   return { marker, migrated, originalId, fixes };
 }
 

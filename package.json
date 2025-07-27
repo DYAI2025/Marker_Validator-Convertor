@@ -13,11 +13,21 @@
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write \"**/*.{js,ts,jsx,tsx,json,md,yaml,yml}\""
   },
-  "keywords": ["marker", "validator", "converter", "yaml", "json"],
+  "keywords": [
+    "marker",
+    "validator",
+    "converter",
+    "yaml",
+    "json"
+  ],
   "author": "Benjamin Poersch",
   "license": "ISC",
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "prettier": "^3.1.0"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "socket.io": "^4.8.1"
   }
 }

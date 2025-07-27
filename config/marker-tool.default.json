@@ -69,14 +69,16 @@
   "repair": {
     "autoFixTypos": true,
     "autoFixDates": true,
-    "autoMigratePrefix": true,
+    "autoMigratePrefix": false,
     "normalizePatterns": true,
     "fallbackAuthor": "auto_import",
-    "addMigrationMetadata": true,
+    "addMigrationMetadata": false,
     "autoFixArrays": true,
     "autoFixDefaults": true,
     "autoFixRiskThresholds": true,
-    "autoFixWindowDefaults": true
+    "autoFixWindowDefaults": true,
+    "preserveExistingIds": true,
+    "onlyFixBrokenMarkers": true
   },
   "validation": {
     "strictMode": false,

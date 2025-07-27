@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://example.org/schemas/marker/v2.1",
-  "title": "Marker Schema v2.1 - Extended",
-  "description": "Extended schema for all marker levels (A_, S_, C_, MM_) with optional fields",
+  "title": "Marker Schema v2.1 - Simplified",
+  "description": "Simplified schema for all marker levels (A_, S_, C_, MM_) with flexible validation",
   "type": "object",
-  "required": ["id", "marker", "description", "level", "version", "status", "author", "created", "last_modified", "tags", "category"],
+  "required": ["id", "description", "level", "version", "status", "author", "created", "last_modified"],
   "properties": {
     "id": {
       "type": "string",
@@ -12,12 +12,19 @@
       "description": "Unique identifier with required prefix (A_, S_, C_, or MM_)"
     },
     "marker": {
-      "type": "string",
-      "description": "Marker name/label in CAPS with underscores"
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Marker name/label in CAPS with underscores"
+        },
+        {
+          "type": "object",
+          "description": "Nested marker object structure"
+        }
+      ]
     },
     "description": {
       "type": "string",
-      "minLength": 10,
       "description": "Clear and sufficient description"
     },
     "level": {
@@ -54,8 +61,7 @@
       "type": "array",
       "items": { "type": "string" },
       "uniqueItems": true,
-      "minItems": 1,
-      "description": "At least one tag required"
+      "description": "Tags for the marker"
     },
     "category": {
       "type": "string",
@@ -71,8 +77,7 @@
     "examples": {
       "type": "array",
       "items": { "type": "string" },
-      "minItems": 2,
-      "description": "At least 2-3 examples per marker"
+      "description": "Examples for the marker"
     },
     "risk_score": {
       "type": "integer",
@@ -146,51 +151,5 @@
     "x_migrated_from": { "type": "string" },
     "x_migration_ts": { "type": "string", "format": "date-time" }
   },
-  "additionalProperties": true,
-  "allOf": [
-    {
-      "if": {
-        "properties": { "level": { "const": 1 } }
-      },
-      "then": {
-        "properties": {
-          "id": { "pattern": "^A_[A-Z0-9_]+$" },
-          "category": { "const": "ATOMIC" }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "level": { "const": 2 } }
-      },
-      "then": {
-        "properties": {
-          "id": { "pattern": "^S_[A-Z0-9_]+$" },
-          "category": { "const": "SEMANTIC" }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "level": { "const": 3 } }
-      },
-      "then": {
-        "properties": {
-          "id": { "pattern": "^C_[A-Z0-9_]+$" },
-          "category": { "const": "CLUSTER" }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "level": { "const": 4 } }
-      },
-      "then": {
-        "properties": {
-          "id": { "pattern": "^MM_[A-Z0-9_]+$" },
-          "category": { "const": "META" }
-        }
-      }
-    }
-  ]
+  "additionalProperties": true
 } 

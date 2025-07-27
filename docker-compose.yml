@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Marker Validator CLI Service
+  marker-validator-cli:
+    build: .
+    container_name: marker-validator-cli
+    volumes:
+      - ./markers:/app/markers
+      - ./examples:/app/examples
+      - ./out:/app/out
+      - ./config:/app/config
+      - ./schemas:/app/schemas
+    working_dir: /app
+    command: ["node", "packages/cli/bin/cli.js", "validate", "markers/", "--verbose"]
+    profiles:
+      - cli
+
+  # Marker Validator GUI Service
+  marker-validator-gui:
+    build: .
+    container_name: marker-validator-gui
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./markers:/app/markers
+      - ./examples:/app/examples
+      - ./out:/app/out
+      - ./config:/app/config
+      - ./schemas:/app/schemas
+    working_dir: /app
+    command: ["node", "packages/gui/src/server.js"]
+    profiles:
+      - gui
+
+  # Marker Validator API Service
+  marker-validator-api:
+    build: .
+    container_name: marker-validator-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./markers:/app/markers
+      - ./examples:/app/examples
+      - ./out:/app/out
+      - ./config:/app/config
+      - ./schemas:/app/schemas
+    working_dir: /app
+    command: ["node", "packages/api/src/server.js"]
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    profiles:
+      - api
+
+  # Development Service with hot reload
+  marker-validator-dev:
+    build: .
+    container_name: marker-validator-dev
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+    volumes:
+      - ./markers:/app/markers
+      - ./examples:/app/examples
+      - ./out:/app/out
+      - ./config:/app/config
+      - ./schemas:/app/schemas
+      - ./packages:/app/packages
+    working_dir: /app
+    command: ["pnpm", "dev"]
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev
+
+volumes:
+  markers-data:
+  output-data:

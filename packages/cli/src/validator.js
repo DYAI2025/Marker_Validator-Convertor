@@ -25,16 +25,15 @@ const LEVEL_PREFIX_MAP = {
 let ajvInstance = null;
 
 function createValidator(options = {}) {
-  if (!ajvInstance) {
-    ajvInstance = new Ajv({
-      allErrors: true,
-      verbose: options.verbose || false,
-      strict: options.strictMode || false,
-      allowUnionTypes: true
-    });
-    addFormats(ajvInstance);
-  }
-  return ajvInstance;
+  // Create a new instance for each validation to avoid schema conflicts
+  const ajv = new Ajv({
+    allErrors: true,
+    verbose: options.verbose || false,
+    strict: options.strictMode || false,
+    allowUnionTypes: true
+  });
+  addFormats(ajv);
+  return ajv;
 }
 
 async function loadSchema(schemaPath) {

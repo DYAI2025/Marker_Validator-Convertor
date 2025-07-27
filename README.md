@@ -1,368 +1,230 @@
 # Marker Validator & Converter Tool
 
-Ein umfassendes Tool zur Validierung und Konvertierung von Marker-Dateien in verschiedenen Formaten (YAML/JSON) mit erweiterten Auto-Fix-Funktionen für alle Projekt-Dateitypen.
+Ein intelligentes Tool zur Validierung und Konvertierung von YAML/JSON-Markern mit konservativer Reparatur-Logik.
 
-## 🎯 **Neue Features (v2.0)**
+## 🎯 Features
 
-### **Multi-Dateityp-Unterstützung**
-Das Tool erkennt und validiert automatisch alle eure Projekt-Dateitypen:
+- **Konservative Validierung**: Korrigiert nur echte Fehler, verändert funktionierende Marker nicht
+- **Intelligente Reparatur**: Behebt Tippfehler, fehlende Standardwerte und Formatierungsprobleme
+- **Multi-Format Support**: YAML ↔ JSON Konvertierung
+- **Web-GUI**: Benutzerfreundliche Oberfläche für visuelle Bearbeitung
+- **CLI-Tool**: Kommandozeilen-Interface für Batch-Verarbeitung
+- **Plugin-System**: Erweiterbare Funktionalität
 
-- **Marker** (A_, S_, C_, MM_) - YAML/JSON
-- **Schema** (SCH_, MASTER_SCH_) - JSON  
-- **Detect** (DETECT_) - JSON
-- **Chunk-Analysis** (CHA_) - YAML
-- **Score** (SCR_) - JSON
-- **Profiler** (PROF_) - Python
-- **Grabber** (GR_) - JavaScript/Python
+## 🚀 Schnellstart
 
-### **Intelligente Auto-Fix-Engine**
-Automatische Reparatur von häufigen Fehlern:
-
-#### **Auto-fixbar (sicher):**
-- ✅ **Format-Fehler**: Präfix-Korrektur, Array-Normalisierung
-- ✅ **Typo-Fehler**: Feldnamen-Korrektur (desciption → description)
-- ✅ **Default-Werte**: Fehlende Felder automatisch ergänzen
-- ✅ **Datum-Normalisierung**: ISO-Format erzwingen
-- ✅ **Array-Konvertierung**: String → Array (pattern, tags, etc.)
-
-#### **Nur melden (inhaltlich):**
-- ❌ **Logische Fehler**: Falsche Pattern, inkonsistente Referenzen
-- ❌ **Fehlende Pflichtfelder**: Keine description, kein pattern
-- ❌ **Datentyp-Fehler**: scoring: string statt object
-- ❌ **Zyklische Referenzen**: ID verweist auf sich selbst
-
-## 📦 **Projektstruktur**
-
-```
-Marker_validator_convert/
-├── config/
-│   └── marker-tool.default.json    # Zentrale Konfiguration
-├── schemas/                        # JSON-Schemas für alle Dateitypen
-│   ├── marker.schema.v2.1.json     # Erweitertes Marker-Schema
-│   ├── schema.schema.json          # Schema für SCH_/MASTER_SCH_
-│   ├── detect.schema.json          # Schema für DETECT_
-│   ├── chunk-analysis.schema.json  # Schema für CHA_
-│   ├── score.schema.json           # Schema für SCR_
-│   ├── profiler.schema.json        # Schema für PROF_
-│   └── grabber.schema.json         # Schema für GR_
-├── packages/
-│   ├── cli/                        # CLI-Tool
-│   └── gui/                        # Web-GUI
-├── examples/                       # Beispiel-Dateien
-│   ├── schema/
-│   ├── detect/
-│   └── chunk-analysis/
-├── plugins/                        # Plugin-System
-└── templates/                      # Vorlagen für alle Dateitypen
-```
-
-## 🚀 **One-Click-Start**
-
-### **GUI starten (Web-Anwendung)**
+### GUI starten (empfohlen)
 ```bash
-# Doppelklick auf die Datei oder im Terminal:
 ./start_gui.command
 ```
-Die Web-Anwendung öffnet sich automatisch in Ihrem Browser unter `http://localhost:3000`
+Das Tool öffnet sich automatisch im Browser unter http://localhost:3000
 
-### **CLI starten (Kommandozeile)**
+### CLI verwenden
 ```bash
-# Doppelklick auf die Datei oder im Terminal:
 ./start_marker_validator.command
 ```
-Dies öffnet ein Terminal-Fenster mit der CLI und zeigt die wichtigsten Befehle an.
 
-### **Manuelle Installation**
+## 📋 Verwendung
+
+### GUI (Web-Interface)
+1. Dateien per Drag & Drop hinzufügen
+2. Validierung und Reparatur-Optionen wählen
+3. Ergebnisse anzeigen und Änderungen überprüfen
+4. Reparaturen anwenden oder ablehnen
+
+### CLI-Befehle
+
+#### Alle Marker validieren
 ```bash
-# Repository klonen
-git clone https://github.com/DYAI2025/Marker_Validator-Convertor.git
-cd Marker_Validator-Convertor
-
-# Dependencies installieren
-pnpm install
-
-# CLI testen
-node packages/cli/bin/cli.js info
+./packages/cli/bin/cli.js validate-all
 ```
 
-## 🛠️ **CLI-Befehle**
-
-### **Dateityp-Erkennung**
+#### Spezifische Dateien reparieren
 ```bash
-# Dateityp einer Datei erkennen
-node packages/cli/bin/cli.js detect examples/schema/SCH_BEZIEHUNG.json
-
-# Ausgabe:
-# Type: schemas
-# Schema: schema
-# Confidence: high
-# Prefix: SCH_
+./packages/cli/bin/cli.js repair markers/*.yaml --output out/repaired
 ```
 
-### **Validierung**
+#### Format konvertieren
 ```bash
-# Einzelne Datei validieren
-node packages/cli/bin/cli.js validate examples/schema/SCH_BEZIEHUNG.json
-
-# Alle Dateien im Projekt validieren
-node packages/cli/bin/cli.js validate-all
-
-# Mit verbose-Ausgabe
-node packages/cli/bin/cli.js validate-all -v
+./packages/cli/bin/cli.js convert markers/*.yaml --format json --output out/json
 ```
 
-### **Auto-Reparatur**
+#### Trockenlauf (nur anzeigen, nicht ändern)
 ```bash
-# Einzelne Datei reparieren (dry-run)
-node packages/cli/bin/cli.js repair examples/bad/needs_repair_schema.json --dry-run
-
-# Mit verbose-Ausgabe
-node packages/cli/bin/cli.js repair examples/bad/needs_repair_schema.json --dry-run -v
-
-# Alle Dateien im Projekt reparieren
-node packages/cli/bin/cli.js repair-all --dry-run
-
-# Echte Reparatur (ohne dry-run)
-node packages/cli/bin/cli.js repair-all
+./packages/cli/bin/cli.js repair markers/*.yaml --dry-run
 ```
 
-### **Konvertierung**
-```bash
-# YAML ↔ JSON Konvertierung
-node packages/cli/bin/cli.js convert examples/markers/A_EXAMPLE.yaml
+## ⚙️ Konfiguration
 
-# Batch-Konvertierung
-node packages/cli/bin/cli.js convert "examples/**/*.yaml"
-```
-
-## 🌐 **Web-GUI**
-
-```bash
-# GUI starten
-./start_gui.command
-
-# Oder manuell
-cd packages/gui && pnpm start
-```
-
-Die Web-GUI unterstützt:
-- **Drag & Drop** für alle Dateitypen
-- **Dateityp-Erkennung** automatisch
-- **Validierung** mit detaillierten Fehlermeldungen
-- **Auto-Reparatur** mit Vorschau
-- **Batch-Verarbeitung** mehrerer Dateien
-
-## ⚙️ **Konfiguration**
-
-Die zentrale Konfiguration in `config/marker-tool.default.json`:
+Das Tool verwendet eine konservative Standardkonfiguration:
 
 ```json
 {
-  "fileTypes": {
-    "markers": {
-      "prefixes": ["A_", "S_", "C_", "MM_"],
-      "extensions": [".yaml", ".yml", ".json"],
-      "folders": ["markers/atomic", "markers/semantic", "markers/cluster", "markers/meta"],
-      "schema": "marker"
-    },
-    "schemas": {
-      "prefixes": ["SCH_", "MASTER_SCH_"],
-      "extensions": [".json"],
-      "folders": ["schemata"],
-      "schema": "schema"
-    }
-    // ... weitere Dateitypen
-  },
   "repair": {
-    "autoFixTypos": true,
-    "autoFixDates": true,
-    "autoMigratePrefix": true,
-    "normalizePatterns": true,
-    "autoFixArrays": true,
-    "autoFixDefaults": true,
-    "autoFixRiskThresholds": true,
-    "autoFixWindowDefaults": true
+    "autoFixTypos": true,           // Tippfehler korrigieren
+    "autoFixDates": true,           // Fehlende Zeitstempel hinzufügen
+    "autoMigratePrefix": false,     // Prefixe NICHT automatisch ändern
+    "normalizePatterns": true,      // Pattern-Arrays normalisieren
+    "preserveExistingIds": true,    // Bestehende IDs beibehalten
+    "onlyFixBrokenMarkers": true    // Nur kaputte Marker reparieren
   }
 }
 ```
 
-## 🔌 **Plugin-System**
+## 🔧 Was wird korrigiert
 
-Das Plugin-System unterstützt:
-- **Hook-System**: beforeValidation, afterValidation, beforeRepair, afterRepair
-- **Dateityp-spezifische Plugins**: Für jeden Dateityp eigene Plugins
-- **Auto-Loading**: Plugins werden automatisch geladen
+### ✅ Automatisch korrigiert
+- Tippfehler in Feldnamen (`desciption` → `description`)
+- Fehlende Standardwerte (`status`, `risk_score`, `author`)
+- Fehlende Zeitstempel (`created`, `last_modified`)
+- String-Arrays (`tags`, `examples`)
+- Whitespace in Beschreibungen
+- Pattern-Arrays
 
-### **Mitgelieferte Plugins**
-1. **Kimi Suggest Plugin**: Schlägt automatisch Tags basierend auf Marker-Inhalt vor
-2. **Timestamp Plugin**: Fügt Verarbeitungs-Zeitstempel zu Markern hinzu
+### ❌ NICHT automatisch geändert
+- Funktionierende Marker-IDs
+- Korrekte Prefixe (A_, S_, C_, MM_)
+- Gültige Feldwerte
+- Bestehende Strukturen
 
-## 📋 **Validierungsregeln**
+## 📁 Projektstruktur
 
-### **Marker-Dateien (A_, S_, C_, MM_)**
-- ✅ **Pflichtfelder**: id, marker, description, level, version, status, author, created, last_modified, tags, category
-- ✅ **ID-Format**: Muss Präfix entsprechend Level haben (A_, S_, C_, MM_)
-- ✅ **Beschreibung**: Mindestens 10 Zeichen
-- ✅ **Beispiele**: Mindestens 2 Beispiele pro Marker
-- ✅ **Tags**: Mindestens 1 Tag
-
-### **Schema-Dateien (SCH_, MASTER_SCH_)**
-- ✅ **Pflichtfelder**: id, weights, window
-- ✅ **Risk-Thresholds**: green, yellow, red Werte
-- ✅ **Window-Konfiguration**: messages oder seconds
-
-### **Detect-Dateien (DETECT_)**
-- ✅ **Pflichtfelder**: id, rule, fire_marker
-- ✅ **Rule-Typ**: regex, stddev, frequency, trend_delta, etc.
-- ✅ **Fire-Marker**: Muss gültige Marker-ID referenzieren
-
-### **Chunk-Analysis-Dateien (CHA_)**
-- ✅ **Pflichtfelder**: id, description, detectors_active, high_level_snapshot, drift_axes, outputs
-- ✅ **Detectors**: Muss gültige DETECT_-IDs referenzieren
-- ✅ **Snapshot-Konfiguration**: include_levels, top_k
-
-## 🎯 **Auto-Fix-Beispiele**
-
-### **Typo-Korrektur**
-```yaml
-# Vorher
-desciption: "Test description"
-weghts: { "A_": 1.0 }
-
-# Nachher (Auto-Fix)
-description: "Test description"
-weights: { "A_": 1.0 }
+```
+Marker_validator_convert/
+├── packages/
+│   ├── cli/          # Kommandozeilen-Tool
+│   └── gui/          # Web-Interface
+├── config/           # Konfigurationsdateien
+├── schemas/          # JSON-Schemas
+├── plugins/          # Erweiterungen
+├── examples/         # Beispiel-Dateien
+└── out/             # Ausgabeverzeichnis
 ```
 
-### **Präfix-Migration**
-```yaml
-# Vorher
-id: "TEST_MARKER"
-level: 2
+## 🛠️ Entwicklung
 
-# Nachher (Auto-Fix)
-id: "S_TEST_MARKER"
-level: 2
-x_migrated_from: "TEST_MARKER"
-x_migration_ts: "2024-01-01T00:00:00Z"
-```
-
-### **Array-Normalisierung**
-```yaml
-# Vorher
-pattern: "test pattern"
-tags: "test, tag"
-
-# Nachher (Auto-Fix)
-pattern: ["test pattern"]
-tags: ["test", "tag"]
-```
-
-### **Default-Werte**
-```yaml
-# Vorher
-id: "A_TEST"
-description: "Test marker"
-
-# Nachher (Auto-Fix)
-id: "A_TEST"
-description: "Test marker"
-status: "draft"
-risk_score: 1
-author: "auto_import"
-created: "2024-01-01T00:00:00Z"
-last_modified: "2024-01-01T00:00:00Z"
-```
-
-## 🚨 **Nicht-Auto-Fixbare Fehler**
-
-Diese Fehler werden nur gemeldet, nie automatisch repariert:
-
-### **Inhaltliche Fehler**
-```yaml
-# ❌ Falsche Pattern-Logik
-pattern: ["invalid regex [unclosed"]
-
-# ❌ Inkonsistente Referenzen
-composed_of:
-  - marker_ids: ["NONEXISTENT_MARKER"]
-```
-
-### **Fehlende Pflichtfelder**
-```yaml
-# ❌ Keine Beschreibung
-id: "A_TEST"
-# description: fehlt komplett
-
-# ❌ Keine Pattern
-id: "A_TEST"
-description: "Test"
-# pattern: fehlt komplett
-```
-
-### **Datentyp-Fehler**
-```yaml
-# ❌ Falscher Datentyp
-scoring: "invalid string instead of object"
-```
-
-## 📊 **Reporting**
-
-Das Tool generiert detaillierte Berichte:
-
+### Dependencies installieren
 ```bash
-# Validierung mit Zusammenfassung
-node packages/cli/bin/cli.js validate-all
-
-# Ausgabe:
-# SCHEMAS: 5 valid, 2 invalid
-# MARKERS: 12 valid, 1 invalid
-# DETECTS: 3 valid, 0 invalid
-# Overall: 20 valid, 3 invalid
+pnpm install
 ```
 
-## 🔧 **Entwicklung**
+### GUI entwickeln
+```bash
+cd packages/gui
+pnpm dev
+```
 
-### **Neue Dateitypen hinzufügen**
-1. Schema in `schemas/` erstellen
-2. Konfiguration in `config/marker-tool.default.json` erweitern
-3. Repair-Logik in `packages/cli/src/repair.js` implementieren
-4. Tests erstellen
+### CLI testen
+```bash
+cd packages/cli
+pnpm start
+```
 
-### **Neue Auto-Fix-Regeln**
-1. Regel in `packages/cli/src/repair.js` implementieren
-2. Konfiguration erweitern
-3. Tests erstellen
+## 📝 Marker-Formate
 
-## 📝 **Changelog**
+### Atomic Marker (Level 1)
+```yaml
+id: A_EXAMPLE_ATOMIC
+marker: EXAMPLE_ATOMIC
+description: "Detects simple patterns"
+level: 1
+pattern:
+  - "👋"
+  - "🫡"
+```
 
-### **v2.0.0** - Multi-Dateityp-Unterstützung
-- ✅ **Neue Dateitypen**: Schema, Detect, Chunk-Analysis, Score, Profiler, Grabber
-- ✅ **Intelligente Erkennung**: Automatische Dateityp-Erkennung
-- ✅ **Erweiterte Auto-Fix**: Dateityp-spezifische Reparatur-Regeln
-- ✅ **Neue CLI-Befehle**: detect, validate-all, repair-all
-- ✅ **Verbesserte Validierung**: Referenz-Validierung, Struktur-Validierung
-- ✅ **Detaillierte Berichte**: Gruppierte Ergebnisse nach Dateityp
+### Semantic Marker (Level 2)
+```yaml
+id: S_EXAMPLE_SEMANTIC
+marker: EXAMPLE_SEMANTIC
+description: "Detects complex patterns"
+level: 2
+pattern:
+  - "(melde.*später|keine zeit)"
+semantic_rules:
+  - "Detects expressions of uncertainty"
+```
 
-### **v1.0.0** - Grundfunktionen
-- ✅ **Marker-Validierung**: YAML/JSON Marker-Dateien
-- ✅ **Konvertierung**: YAML ↔ JSON
-- ✅ **Auto-Reparatur**: Typo-Korrektur, Präfix-Migration
-- ✅ **Web-GUI**: Drag & Drop Interface
-- ✅ **Plugin-System**: Erweiterbare Architektur
+### Cluster Marker (Level 3)
+```yaml
+id: C_EXAMPLE_CLUSTER
+marker: EXAMPLE_CLUSTER
+description: "Combines multiple markers"
+level: 3
+cluster_components:
+  - A_WENIG_ZEIT
+  - S_EXAMPLE_SEMANTIC
+trigger_threshold: 2
+```
 
-## 🤝 **Beitragen**
+### Meta Marker (Level 4)
+```yaml
+id: MM_EXAMPLE_META
+marker: EXAMPLE_META
+description: "High-level analysis"
+level: 4
+required_clusters:
+  - C_EXAMPLE_CLUSTER
+meta_analysis:
+  temporal_pattern: "Patterns evolve over time"
+```
+
+## 🔍 Validierung
+
+Das Tool validiert Marker gegen JSON-Schemas und führt zusätzliche Checks durch:
+
+- Schema-Konformität
+- Referenz-Validierung
+- Dateistruktur-Validierung
+- Prefix-Level-Konsistenz
+- Zirkuläre Referenzen
+
+## 🚨 Fehlerbehandlung
+
+### Häufige Probleme
+1. **Fehlende Pflichtfelder**: Werden automatisch ergänzt
+2. **Tippfehler**: Werden automatisch korrigiert
+3. **Falsche Prefixe**: Nur bei echten Fehlern geändert
+4. **Ungültige Referenzen**: Werden gemeldet, aber nicht automatisch repariert
+
+### Debug-Modus
+```bash
+./packages/cli/bin/cli.js validate markers/*.yaml --verbose
+```
+
+## 📊 Ausgabe
+
+### Erfolgreiche Validierung
+```
+✓ A_EXAMPLE_ATOMIC (markers)
+✓ S_EXAMPLE_SEMANTIC (markers)
+Validation complete: 2 valid, 0 invalid
+```
+
+### Reparatur-Ergebnisse
+```
+✓ A_EXAMPLE_ATOMIC: 3 fixes applied
+  - Fixed typo: desciption → description
+  - Added default status: draft
+  - Added creation timestamp
+Repair complete: 1 repaired, 0 unchanged, 0 errors
+```
+
+## 🤝 Beitragen
 
 1. Fork erstellen
-2. Feature-Branch erstellen (`git checkout -b feature/amazing-feature`)
-3. Änderungen committen (`git commit -m 'Add amazing feature'`)
-4. Branch pushen (`git push origin feature/amazing-feature`)
-5. Pull Request erstellen
+2. Feature-Branch erstellen
+3. Änderungen committen
+4. Pull Request erstellen
 
-## 📄 **Lizenz**
+## 📄 Lizenz
 
-ISC License - siehe [LICENSE](LICENSE) Datei für Details.
+ISC License - siehe LICENSE-Datei für Details.
 
----
+## 🆘 Support
 
-**Entwickelt mit ❤️ für die Marker-Engine Community** 
+Bei Problemen oder Fragen:
+1. Issues auf GitHub erstellen
+2. Debug-Modus verwenden (`--verbose`)
+3. Konfiguration überprüfen
+4. Beispiel-Dateien testen 
